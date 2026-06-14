@@ -9,41 +9,41 @@
 
 ## 1. Foundation and build system
 
-1.1 Create the Python package skeleton and project metadata.
+- [x] 1.1 Create the Python package skeleton and project metadata.
 
-- Create `pyproject.toml`.
-- Create `requirements.txt`.
-- Create `src/__init__.py`.
+  - Create `pyproject.toml`.
+  - Create `requirements.txt`.
+  - Create `src/__init__.py`.
 
-1.2 Create the Rust core crate and maturin bridge.
+- [x] 1.2 Create the Rust core crate and maturin bridge.
 
-- Create `gnss-core/Cargo.toml`.
-- Create `gnss-core/pyproject.toml`.
-- Create `gnss-core/src/lib.rs`.
-- Create shared Rust types in `gnss-core/src/types.rs`.
+  - Create `gnss-core/Cargo.toml`.
+  - Create `gnss-core/pyproject.toml`.
+  - Create `gnss-core/src/lib.rs`.
+  - Create shared Rust types in `gnss-core/src/types.rs`.
 
-1.3 Create the desktop app bootstrap.
+- [x] 1.3 Create the desktop app bootstrap.
 
-- Create `src/main.py`.
-- Create `src/ui/main_window.py`.
+  - Create `src/main.py`.
+  - Create `src/ui/main_window.py`.
 
 ## 2. GNSS core pipeline
 
-2.1 Implement RINEX domain types and parsing entry points.
+- [x] 2.1 Implement RINEX domain types and parsing entry points.
 
-- Add parser module boundaries.
-- Add reading contracts for OBS/NAV 2.x–4.x.
+  - Add parser module boundaries.
+  - Add reading contracts for OBS/NAV 2.x–4.x.
 
-2.2 Implement single-baseline PPK flow.
+- [ ] 2.2 Implement single-baseline PPK flow.
 
-- Add orbit/ephemeris module.
-- Add ambiguity-resolution pipeline.
-- Expose a Python-callable API via PyO3.
+  - Add orbit/ephemeris module.
+  - Add ambiguity-resolution pipeline.
+  - Expose a Python-callable API via PyO3.
 
-2.3 Add core validation fixtures and tests.
+- [ ] 2.3 Add core validation fixtures and tests.
 
-- Add real RINEX samples.
-- Add Rust unit tests for parser and solver.
+  - Add real RINEX samples.
+  - Add Rust unit tests for parser and solver.
 
 ## 3. UI shell and map view
 
