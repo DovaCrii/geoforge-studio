@@ -1,0 +1,60 @@
+schema: spec-driven
+strict_tdd: false
+context: |
+  Repo empty; stack not yet detected.
+  Planned product: desktop-native GNSS/geospatial app.
+  Focus: GNSS processing, 2D maps, DXF/KMZ import, simple volume workflows.
+  Testing: no runner detected yet.
+testing: |
+  ## Testing Capabilities
+
+  **Strict TDD Mode**: disabled
+  **Detected**: 2026-06-13
+
+  ### Test Runner
+
+  - Command: —
+  - Framework: none detected
+
+  ### Test Layers
+
+  | Layer | Available | Tool |
+  | ----- | --------- | ---- |
+  | Unit | ❌ | — |
+  | Integration | ❌ | — |
+  | E2E | ❌ | — |
+
+  ### Coverage
+
+  - Available: ❌
+  - Command: —
+
+  ### Quality Tools
+
+  | Tool | Available | Command |
+  | ---- | --------- | ------- |
+  | Linter | ❌ | — |
+  | Type checker | ❌ | — |
+  | Formatter | ❌ | — |
+
+rules:
+  proposal:
+    - Include market context, risks, and rollback options for risky scope.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+  design:
+    - Document architecture decisions and UX rationale.
+    - Include diagrams for non-trivial flows.
+  tasks:
+    - Keep tasks small and session-sized.
+    - Group by phase and dependency.
+  apply:
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.

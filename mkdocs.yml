@@ -1,0 +1,7 @@
+site_name: GeoForge Studio
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Vision: vision.md
+  - Roadmap: roadmap.md
