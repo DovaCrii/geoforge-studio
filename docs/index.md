@@ -1,24 +1,30 @@
 # GeoForge Studio docs
 
-This is the main reading path for the project.
+This folder is the human-readable entry point for the project.
 
-## Start here
+## Quick path
 
-1. **Project vision** — `vision.md`
-2. **Roadmap** — `roadmap.md`
-3. **SDD artifacts** — `openspec/`
+1. Read `vision.md`
+2. Read `roadmap.md`
+3. Read `openspec/config.yaml`
+4. Continue with SDD exploration and proposal
 
-## What lives where
+## Details
 
-| Place | What it stores |
+| Area | Decision |
 | --- | --- |
-| `docs/` | Human-readable project docs |
-| `openspec/` | Specs, design, tasks, and active change state |
-| `.atl/` | Skills/registry for the OpenCode workflow |
-| GitHub repo | Online backup, sharing, and future PR workflow |
+| Product | Desktop-native GNSS and geospatial workstation |
+| First slice | GNSS processing, 2D map view, DXF/KMZ import, volumes |
+| Out of scope | Full CAD suite, IFC-heavy workflows, web point-cloud viewer |
+| Source of truth | `openspec/` |
+| Workflow | OpenSpec / SDD |
 
-## Notes
+## Checklist
 
-- The desktop app is the first project.
-- The point-cloud/web viewer is a separate future project.
-- Keep research notes short and decision-focused.
+- [ ] I know what GeoForge Studio is trying to solve.
+- [ ] I know where the planning artifacts live.
+- [ ] I know the first slice and what is excluded.
+
+## Next step
+
+Read `vision.md` and then open `openspec/config.yaml`.

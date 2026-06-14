@@ -1,20 +1,41 @@
 # GeoForge Studio
 
-Desktop-native GNSS and geospatial processing app, focused first on:
+Desktop-native geospatial workstation for GNSS and survey workflows.
+
+GeoForge Studio starts with a focused first slice:
 
 - GNSS post-processing
 - 2D map visualization
 - DXF / KMZ import
-- Simple volume workflows
+- Volume calculations
 
-## Where to read the project info
+## Why this exists
 
-- `docs/index.md` — project overview and reading path
-- `openspec/` — SDD source of truth for proposal, specs, design, and tasks
-- `.atl/skill-registry.md` — agent/skill index for this workspace
+The goal is to bridge the gap between rigid GNSS tools and heavy GIS/CAD suites.
+The first release is intentionally narrow: do the core survey work well, keep it offline,
+and make the UX clean.
 
-## Quick start
+## Reading path
 
-1. Read `docs/index.md`
-2. Read `openspec/config.yaml`
-3. Continue with SDD exploration and proposal
+1. `docs/index.md` — project overview and navigation
+2. `docs/vision.md` — product scope and non-goals
+3. `docs/roadmap.md` — phased delivery plan
+4. `openspec/` — SDD proposal/spec/design/tasks source of truth
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `docs/` | Human-readable docs |
+| `openspec/` | SDD artifacts and active change state |
+| `.atl/` | Agent/skill registry for the workflow |
+
+## Status
+
+- Public repo: GitHub
+- Branch: `main`
+- Planning mode: SDD / OpenSpec
+
+## Next step
+
+Read `docs/index.md`, then continue with SDD exploration.
