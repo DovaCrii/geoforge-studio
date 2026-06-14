@@ -34,52 +34,52 @@
   - Add parser module boundaries.
   - Add reading contracts for OBS/NAV 2.x–4.x.
 
-- [ ] 2.2 Implement single-baseline PPK flow.
+- [x] 2.2 Implement single-baseline PPK flow.
 
   - Add orbit/ephemeris module.
   - Add ambiguity-resolution pipeline.
   - Expose a Python-callable API via PyO3.
 
-- [ ] 2.3 Add core validation fixtures and tests.
+- [x] 2.3 Add core validation fixtures and tests.
 
   - Add real RINEX samples.
   - Add Rust unit tests for parser and solver.
 
 ## 3. UI shell and map view
 
-3.1 Create the map renderer abstraction.
+- [x] 3.1 Create the map renderer abstraction.
 
 - Add `MapRenderer` interface.
 - Add Qt-native `QGraphicsView` backend.
 
 3.2 Create the main geospatial workspace.
 
-- Add project/session orchestration service.
-- Add map panel and results panel.
+- [x] Add project/session orchestration service.
+- [x] Add map panel and results panel.
 
 3.3 Add CRS handling.
 
-- Integrate `pyproj`.
-- Ensure coordinates reproject correctly to the user CRS.
+- [x] Integrate `pyproj`.
+- [x] Ensure coordinates reproject correctly to the user CRS.
 
 ## 4. Import layers
 
 4.1 Add DXF overlay import (read-only).
 
-- Create `src/importers/dxf_importer.py`.
-- Validate supported common entities.
+- [x] Create `src/importers/dxf_importer.py`.
+- [x] Validate supported common entities.
 
 4.2 Add KMZ/KML overlay import (read-only).
 
-- Create `src/importers/kmz_importer.py`.
-- Handle zipped KML + basic placemark geometry.
+- [x] Create `src/importers/kmz_importer.py`.
+- [x] Handle zipped KML + basic placemark geometry.
 
 ## 5. Volume workflow
 
 5.1 Add TIN surface generation.
 
-- Create `src/volume/surface.py`.
-- Generate triangulation from survey points.
+- [x] Create `src/volume/surface.py`.
+- [x] Generate triangulation from survey points.
 
 5.2 Add cut/fill calculations and display.
 
