@@ -4,8 +4,10 @@ This module provides the main application window with menu bar,
 toolbar, and central workspace for GNSS processing and visualization.
 """
 
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QMenuBar, QToolBar, QStatusBar, QTabWidget,
     QLabel, QLineEdit, QPushButton, QFileDialog, QMessageBox
 )
@@ -102,7 +104,15 @@ class MainWindow(QMainWindow):
         open_project_action = QAction("Open Project", self)
         open_project_action.triggered.connect(self.open_project)
         file_menu.addAction(open_project_action)
-        
+
+        import_dxf_action = QAction("Import DXF...", self)
+        import_dxf_action.triggered.connect(self.import_dxf)
+        file_menu.addAction(import_dxf_action)
+
+        import_kml_action = QAction("Import KMZ/KML...", self)
+        import_kml_action.triggered.connect(self.import_kmz_kml)
+        file_menu.addAction(import_kml_action)
+
         save_project_action = QAction("Save Project", self)
         save_project_action.triggered.connect(self.save_project)
         file_menu.addAction(save_project_action)
@@ -190,7 +200,77 @@ class MainWindow(QMainWindow):
         )
         if file_path:
             self.status_label.setText(f"Project loaded: {file_path}")
-            
+
+    def import_dxf(self):
+        """Import a DXF file and display it on the map."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import DXF",
+            "",
+            "DXF Files (*.dxf)"
+        )
+        if not file_path:
+            self.status_label.setText("DXF import cancelled")
+            return
+
+        try:
+            importer = self.services.get("dxf")
+            if importer is None:
+                raise ValueError("DXF importer is not available")
+
+            result = importer.import_dxf(file_path)
+            if not result.success:
+                raise ValueError(result.message or "DXF import failed")
+
+            self.map_canvas.load_dxf_overlay(result)
+            self.tab_widget.setCurrentWidget(self.map_workspace)
+            self.status_label.setText(f"DXF imported: {Path(file_path).name}")
+        except Exception as exc:
+            QMessageBox.warning(self, "Import failed", str(exc))
+
+    def import_kmz_kml(self):
+        """Import a KMZ or KML file and display it on the map."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import KMZ/KML",
+            "",
+            "KML/KMZ Files (*.kml *.kmz)"
+        )
+        if not file_path:
+            self.status_label.setText("KMZ/KML import cancelled")
+            return
+
+        try:
+            importer = self.services.get("kmz")
+            if importer is None:
+                raise ValueError("KMZ/KML importer is not available")
+
+            suffix = Path(file_path).suffix.lower()
+            if suffix == ".kml":
+                result = importer.import_kml(file_path)
+            else:
+                result = importer.import_kmz(file_path)
+
+            if not result.success:
+                raise ValueError(result.message or "KMZ/KML import failed")
+
+            self.map_canvas.load_kml_overlay(result)
+            self.tab_widget.setCurrentWidget(self.map_workspace)
+            self.status_label.setText(f"KMZ/KML imported: {Path(file_path).name}")
+        except Exception as exc:
+            QMessageBox.warning(self, "Import failed", str(exc))
+
+    def load_project(self):
+        """Load the current project into the map workspace."""
+        project_name = self.project_name_input.text().strip()
+        if not project_name:
+            QMessageBox.warning(self, "Warning", "Please enter a project name")
+            return
+
+        self.map_canvas.load_project(project_name)
+        self.tab_widget.setCurrentWidget(self.map_workspace)
+        self.status_label.setText(f"Project loaded on map: {project_name}")
+
     def save_project(self):
         """Save the current project."""
         if self.project_name_input.text():

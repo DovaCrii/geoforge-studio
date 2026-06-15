@@ -83,26 +83,25 @@ class DxfImporter:
                 
             entities = []
             
-            # Process each layer
-            for layer in doc.layers:
-                if layer.name not in self.supported_layers:
+            # Process modelspace entities once to avoid duplicating entities per layer
+            for entity in doc.modelspace():
+                if entity.dxftype() not in self.supported_entities:
                     continue
-                    
-                # Process entities in this layer
-                for entity in doc.modelspace():
-                    if entity.dxftype() not in self.supported_entities:
-                        continue
-                        
-                    # Extract entity data
-                    entity_data = DxfEntity(
-                        handle=str(entity.dxf.handle),
-                        layer=layer.name,
-                        type=entity.dxftype(),
-                        points=self._extract_points(entity),
-                        attributes=self._extract_attributes(entity)
-                    )
-                    
-                    entities.append(entity_data)
+
+                entity_layer = getattr(entity.dxf, "layer", "")
+                if entity_layer not in self.supported_layers:
+                    continue
+
+                # Extract entity data
+                entity_data = DxfEntity(
+                    handle=str(entity.dxf.handle),
+                    layer=entity_layer,
+                    type=entity.dxftype(),
+                    points=self._extract_points(entity),
+                    attributes=self._extract_attributes(entity)
+                )
+
+                entities.append(entity_data)
                     
             return DxfImportResult(
                 success=True,

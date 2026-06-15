@@ -135,9 +135,9 @@ class KmzImporter:
             
             # Find all placemark elements
             for placemark in root.findall('.//kml:Placemark', ns):
-                name = placemark.findtext('.//kml:name', ns) or "Unnamed Placemark"
-                description = placemark.findtext('.//kml:description', ns) or ""
-                style_url = placemark.findtext('.//kml:styleUrl', ns) or ""
+                name = placemark.findtext('.//kml:name', namespaces=ns) or "Unnamed Placemark"
+                description = placemark.findtext('.//kml:description', namespaces=ns) or ""
+                style_url = placemark.findtext('.//kml:styleUrl', namespaces=ns) or ""
                 
                 # Extract coordinates
                 coordinates = []

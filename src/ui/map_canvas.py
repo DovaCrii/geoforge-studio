@@ -476,6 +476,77 @@ class MapCanvas(QWidget):
 
                 # Zoom to extents
                 self.renderer.zoom_to_extents()
+
+    def load_dxf_overlay(self, import_result) -> None:
+        """Render imported DXF entities on the map as overlays."""
+        if not import_result or not getattr(import_result, "success", False):
+            return
+
+        from PyQt6.QtGui import QColor
+
+        geometries = []
+        for entity in getattr(import_result, "entities", []):
+            points = list(getattr(entity, "points", []) or [])
+            if len(points) < 2:
+                continue
+
+            geom_type = "polygon" if len(points) >= 4 and points[0][:2] == points[-1][:2] else "line"
+            geometries.append(
+                OverlayGeom(
+                    geom_type=geom_type,
+                    points=points,
+                    color=QColor(64, 200, 255),
+                    pen_width=2.0,
+                )
+            )
+
+        if geometries:
+            self.renderer.add_overlay(f"dxf:{getattr(import_result, 'file_path', 'import')}", geometries)
+            self.renderer.zoom_to_extents()
+
+    def load_kml_overlay(self, import_result) -> None:
+        """Render imported KML/KMZ placemarks on the map."""
+        if not import_result or not getattr(import_result, "success", False):
+            return
+
+        from PyQt6.QtGui import QColor
+
+        point_layer = []
+        geometries = []
+
+        for placemark in getattr(import_result, "placemarks", []):
+            coords = list(getattr(placemark, "coordinates", []) or [])
+            if not coords:
+                continue
+
+            if len(coords) == 1:
+                point_layer.extend(coords)
+                continue
+
+            geom_type = "polygon" if len(coords) >= 4 and coords[0][:2] == coords[-1][:2] else "line"
+            geometries.append(
+                OverlayGeom(
+                    geom_type=geom_type,
+                    points=coords,
+                    color=QColor(120, 220, 120),
+                    pen_width=2.0,
+                )
+            )
+
+        if point_layer:
+            style = PointStyle(color=QColor(120, 220, 120), size=7.0, pen_width=1.5)
+            self.renderer.add_point_layer(
+                f"kml-points:{getattr(import_result, 'file_path', 'import')}",
+                point_layer,
+                style,
+            )
+
+        if point_layer and not geometries:
+            self.renderer.zoom_to_extents()
+
+        if geometries:
+            self.renderer.add_overlay(f"kml:{getattr(import_result, 'file_path', 'import')}", geometries)
+            self.renderer.zoom_to_extents()
     
     def get_widget(self) -> QWidget:
         """Get the Qt widget that displays the map."""
