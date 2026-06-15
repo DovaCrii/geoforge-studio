@@ -98,6 +98,10 @@ class MainWindow(QMainWindow):
         save_project_action = QAction("Save Project", self)
         save_project_action.triggered.connect(self.save_project)
         file_menu.addAction(save_project_action)
+
+        export_map_action = QAction("Export Map PNG...", self)
+        export_map_action.triggered.connect(self.export_map_png)
+        file_menu.addAction(export_map_action)
         
         file_menu.addSeparator()
         
@@ -174,6 +178,23 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Project saved: {self.project_name_input.text()}")
         else:
             QMessageBox.warning(self, "Warning", "Please enter a project name")
+
+    def export_map_png(self):
+        """Export the current map view to a PNG image."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Map as PNG",
+            "geoforge-map.png",
+            "PNG Images (*.png)"
+        )
+        if not file_path:
+            self.status_label.setText("Map export cancelled")
+            return
+
+        if self.map_canvas.export_png(file_path):
+            self.status_label.setText(f"Map exported: {file_path}")
+        else:
+            QMessageBox.warning(self, "Export failed", "Could not save the map image")
             
     def run_ppk(self):
         """Run PPK processing."""

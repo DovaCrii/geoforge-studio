@@ -26,6 +26,9 @@ GeoForge Studio currently ships with the following functionality:
 - **Smoke Testing**: End-to-end verification with sample datasets
 - **Fixtures**: Sample RINEX, DXF, and KMZ files for testing
 
+### Export Workflows
+- **Map Screenshot Export**: Save the current map view as PNG
+
 ## What is NOT included ❌
 
 **Known limitations and non-goals for the first release:**

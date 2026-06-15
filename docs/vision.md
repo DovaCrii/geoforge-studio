@@ -17,6 +17,9 @@ GeoForge Studio currently ships with the following capabilities:
 - **DXF Import**: Read-only import of common DXF entities (lines, polylines)
 - **KMZ/KML Import**: Read-only import of KML placemarks and basic geometry
 
+### Export Workflows
+- **Map Screenshot Export**: Save the current map view as PNG
+
 ## Product intent
 
 The app should feel professional, clear, and optimized for field-to-office workflows.

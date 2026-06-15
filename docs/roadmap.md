@@ -19,7 +19,7 @@ GeoForge Studio has completed the core application development:
 ## Phase 3 — Product polish (IN PROGRESS)
 
 - ✅ Volumes (TIN surfaces, cut/fill calculations)
-- ⏳ Export workflows (planned)
+- ⏳ Export workflows (CSV volume export, map PNG export)
 - ⏳ UX polish (planned)
 - ⏳ Optional AI/chatbot layer later (planned)
 

@@ -470,6 +470,10 @@ class MapCanvas(QWidget):
     def get_widget(self) -> QWidget:
         """Get the Qt widget that displays the map."""
         return self
+
+    def export_png(self, file_path: str) -> bool:
+        """Export the current map view to a PNG file."""
+        return self._view.grab().save(file_path, "PNG")
         
     def get_crs(self) -> Optional[pyproj.CRS]:
         """Get the current coordinate reference system.
