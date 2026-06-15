@@ -1,0 +1,18 @@
+[package]
+name = "gnss-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "GNSS processing core with RINEX parsing and PPK algorithms"
+repository = "https://github.com/geoforge-studio/gnss-core"
+
+[lib]
+name = "gnss_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module"] }
+pyo3-builtin = "0.20"
+thiserror = "1.0"
+num-traits = "0.2"
+num-derive = "0.4"

@@ -1,7 +1,30 @@
 site_name: GeoForge Studio
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: slate
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - scheme: default
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
 nav:
   - Home: index.md
   - Vision: vision.md
   - Roadmap: roadmap.md
+extra_css:
+  - stylesheets/extra.css

@@ -1,0 +1,31 @@
+:root {
+  --md-primary-fg-color: #0f172a;
+  --md-primary-fg-color--light: #1e293b;
+  --md-primary-fg-color--dark: #020617;
+  --md-accent-fg-color: #38bdf8;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  letter-spacing: -0.03em;
+}
+
+.md-header,
+.md-tabs {
+  background: linear-gradient(90deg, #020617 0%, #0f172a 55%, #0b1120 100%);
+}
+
+.md-typeset a {
+  text-decoration-thickness: 1px;
+}
+
+.md-typeset table {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 16px;
+}

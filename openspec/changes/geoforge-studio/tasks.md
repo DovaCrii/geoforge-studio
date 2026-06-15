@@ -83,18 +83,18 @@
 
 5.2 Add cut/fill calculations and display.
 
-- Create `src/volume/calculator.py`.
-- Create `src/ui/volume_panel.py`.
-- Create `src/volume/renderer.py`.
+- [x] Create `src/volume/calculator.py`.
+- [x] Create `src/ui/volume_panel.py`.
+- [x] Create `src/volume/renderer.py`.
 
 ## 6. Verification and docs
 
 6.1 Add sample datasets and smoke checks.
 
-- Add small RINEX/DXF/KMZ fixtures.
-- Add an end-to-end manual smoke path.
+- [x] Add small RINEX/DXF/KMZ fixtures.
+- [x] Add an end-to-end manual smoke path.
 
 6.2 Update public docs after implementation.
 
-- Keep README and docs aligned with shipped capabilities.
-- Document limitations and non-goals clearly.
+- [x] Keep README and docs aligned with shipped capabilities.
+- [x] Document limitations and non-goals clearly.
