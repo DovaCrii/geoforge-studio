@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTextEdit,
     QHBoxLayout,
+    QComboBox,
 )
 
 from services.help_service import HelpService
@@ -47,6 +48,14 @@ class HelpAssistantPanel(QWidget):
         self.backend_label.setStyleSheet("color: #94a3b8;")
         layout.addWidget(self.backend_label)
 
+        backend_row = QHBoxLayout()
+        backend_row.addWidget(QLabel("Mode:"))
+        self.backend_selector = QComboBox()
+        self.backend_selector.addItems(["static", "auto", "ollama"])
+        self.backend_selector.currentTextChanged.connect(self._change_backend_mode)
+        backend_row.addWidget(self.backend_selector)
+        layout.addLayout(backend_row)
+
         self.question_input = QLineEdit()
         self.question_input.setPlaceholderText("Ask about RINEX, PPK, CRS, DXF, KMZ, volumes, or exports")
         self.question_input.returnPressed.connect(self.ask_question)
@@ -71,6 +80,11 @@ class HelpAssistantPanel(QWidget):
         self.response_view.setPlaceholderText("Answers appear here.")
         layout.addWidget(self.response_view)
 
+        self.suggestions_label = QLabel("Suggestions: RINEX, PPK, CRS, DXF, KMZ, Exports")
+        self.suggestions_label.setStyleSheet("color: #cbd5e1; font-size: 12px;")
+        self.suggestions_label.setWordWrap(True)
+        layout.addWidget(self.suggestions_label)
+
     def _set_intro(self) -> None:
         self.response_view.setPlainText(
             "Ask a short question and get a lightweight offline answer.\n"
@@ -88,7 +102,10 @@ class HelpAssistantPanel(QWidget):
         if context.get("crs"):
             pieces.append(f"CRS: {context['crs']}")
         self.context_label.setText(" | ".join(pieces) if pieces else "Offline contextual help")
-        self.backend_label.setText(f"Backend: {self.help_service.describe_backend()}")
+        if hasattr(self.help_service, "active_label"):
+            self.backend_label.setText(f"Backend: {self.help_service.active_label()}")
+        else:
+            self.backend_label.setText(f"Backend: {self.help_service.describe_backend()}")
 
     def ask_question(self) -> None:
         question = self.question_input.text().strip()
@@ -98,6 +115,7 @@ class HelpAssistantPanel(QWidget):
 
         answer = self.help_service.answer(question, self._context())
         self.backend_label.setText(f"Backend: {answer.backend}")
+        self.suggestions_label.setText(f"Suggestions: {', '.join(answer.suggestions)}")
         self.response_view.setPlainText(
             f"Topic: {answer.topic}\n"
             f"Backend: {answer.backend}\n\n"
@@ -109,8 +127,14 @@ class HelpAssistantPanel(QWidget):
         """Prefer the local AI backend when available, otherwise fallback."""
         if hasattr(self.help_service, "set_mode"):
             self.help_service.set_mode("ollama")
+            self.backend_selector.setCurrentText("ollama")
         self.refresh_context()
         self.ask_question()
+
+    def _change_backend_mode(self, mode: str) -> None:
+        if hasattr(self.help_service, "set_mode"):
+            self.help_service.set_mode(mode)
+        self.refresh_context()
 
     def _context(self) -> dict:
         if self.context_provider:

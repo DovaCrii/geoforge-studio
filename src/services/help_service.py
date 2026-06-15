@@ -88,11 +88,17 @@ class StaticHelpBackend:
 
     def _context_lines(self, context: Dict[str, str]) -> str:
         parts: List[str] = []
+        labels = {
+            "tab": "tab",
+            "project": "project",
+            "crs": "CRS",
+            "status": "status",
+        }
         for key in ("tab", "project", "crs", "status"):
             value = context.get(key)
             if value:
-                parts.append(f"{key}: {value}")
-        return " | ".join(parts)
+                parts.append(f"{labels[key]} {value}")
+        return "; ".join(parts)
 
     def _suggestions_for_topic(self, topic: str) -> List[str]:
         if topic == "export":
@@ -175,7 +181,7 @@ class OllamaHelpBackend:
             f"Question: {question}\n"
             f"Context: {context_text}\n\n"
             "Answer in a concise way. If the user asks about app behavior, explain the steps. "
-            "If the user asks about concepts, explain them simply."
+            "If the user asks about concepts, explain them simply. Prefer bullet points when helpful."
         )
 
     def _infer_topic(self, question: str) -> str:
@@ -226,6 +232,13 @@ class HelpService:
                 pass
 
         return self.static_backend.answer(question, context)
+
+    def active_label(self) -> str:
+        if self.mode == "ollama":
+            return self.ollama_backend.describe_backend()
+        if self.mode == "auto":
+            return f"auto ({self.ollama_backend.describe_backend()} fallback)"
+        return self.static_backend.describe_backend()
 
 
 __all__ = ["HelpAnswer", "HelpService", "StaticHelpBackend", "OllamaHelpBackend"]
