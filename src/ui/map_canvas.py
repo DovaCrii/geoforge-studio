@@ -151,6 +151,7 @@ class QtMapRenderer(MapRenderer):
         self._crs_manager = CRSManager()
         self._layers: Dict[str, Any] = {}
         self._overlays: Dict[str, Any] = {}
+        self._zoom_factor = 1.2
         
         # Configure view
         self._view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
@@ -321,6 +322,15 @@ class QtMapRenderer(MapRenderer):
             )
             
             self._view.fitInView(scene_rect, Qt.AspectRatioMode.KeepAspectRatio)
+
+    def zoom_in(self) -> None:
+        """Zoom in the view."""
+        self._view.scale(self._zoom_factor, self._zoom_factor)
+
+    def zoom_out(self) -> None:
+        """Zoom out the view."""
+        factor = 1 / self._zoom_factor
+        self._view.scale(factor, factor)
     
     def clear(self) -> None:
         """Clear all layers from the map."""
@@ -473,7 +483,7 @@ class MapCanvas(QWidget):
 
     def export_png(self, file_path: str) -> bool:
         """Export the current map view to a PNG file."""
-        return self._view.grab().save(file_path, "PNG")
+        return self.renderer.get_widget().grab().save(file_path, "PNG")
         
     def get_crs(self) -> Optional[pyproj.CRS]:
         """Get the current coordinate reference system.

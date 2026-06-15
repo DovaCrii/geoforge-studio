@@ -44,11 +44,9 @@ class VolumePanel(QWidget):
         self.results_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.results_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         
-        # Set reasonable row count - increased for cut/fill metrics
-        self.results_table.setRowCount(8)
-        
-        # Add sample data (in a real implementation, this would come from services)
-        self._populate_sample_data()
+        # Start with a calm empty state
+        self.results_table.setRowCount(1)
+        self._populate_empty_state()
         
         layout.addWidget(self.results_table)
         
@@ -79,18 +77,10 @@ class VolumePanel(QWidget):
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.status_label)
         
-    def _populate_sample_data(self):
-        """Populate the results table with sample data."""
-        # Sample volume analysis results including cut/fill
+    def _populate_empty_state(self):
+        """Populate the table with an empty-state row."""
         sample_data = [
-            ("Total Volume", "0.00 m³", "✓"),
-            ("Cut Volume", "0.00 m³", "✓"),
-            ("Fill Volume", "0.00 m³", "✓"),
-            ("Net Volume", "0.00 m³", "✓"),
-            ("Surface Area", "0.00 m²", "✓"),
-            ("Grid Cells", "0", "⚠"),
-            ("Processing Time", "0.00s", "✓"),
-            ("Status", "Ready", "✓")
+            ("Status", "No volume results yet", "—"),
         ]
         
         for row, (metric, value, status) in enumerate(sample_data):
