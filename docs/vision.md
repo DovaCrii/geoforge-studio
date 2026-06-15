@@ -23,7 +23,7 @@ GeoForge Studio currently ships with the following capabilities:
 - **Map Screenshot Export**: Save the current map view as PNG
 
 ### Help Assistant
-- **Local Help Assistant**: Lightweight offline contextual guidance with a future local-AI extension point
+- **Local Help Assistant**: Lightweight offline contextual guidance with an Ollama-ready local-AI extension point
 
 ## Product intent
 

@@ -15,6 +15,12 @@ def main() -> int:
 
     assert answer.topic == "ppk"
     assert "Context:" in answer.answer
+
+    service.set_mode("ollama")
+    fallback = service.answer("What is CRS?", {"tab": "Map Workspace"})
+    assert fallback.topic == "crs"
+    assert fallback.backend in {"static-fallback", "static", "ollama:qwen2.5:0.5b"}
+
     print("Help service OK")
     return 0
 

@@ -43,6 +43,10 @@ class HelpAssistantPanel(QWidget):
         self.context_label.setStyleSheet("color: #94a3b8;")
         layout.addWidget(self.context_label)
 
+        self.backend_label = QLabel("Backend: static")
+        self.backend_label.setStyleSheet("color: #94a3b8;")
+        layout.addWidget(self.backend_label)
+
         self.question_input = QLineEdit()
         self.question_input.setPlaceholderText("Ask about RINEX, PPK, CRS, DXF, KMZ, volumes, or exports")
         self.question_input.returnPressed.connect(self.ask_question)
@@ -52,6 +56,10 @@ class HelpAssistantPanel(QWidget):
         ask_button = QPushButton("Ask")
         ask_button.clicked.connect(self.ask_question)
         actions.addWidget(ask_button)
+
+        ai_button = QPushButton("Try local AI")
+        ai_button.clicked.connect(self.try_local_ai)
+        actions.addWidget(ai_button)
 
         refresh_button = QPushButton("Refresh context")
         refresh_button.clicked.connect(self.refresh_context)
@@ -68,6 +76,7 @@ class HelpAssistantPanel(QWidget):
             "Ask a short question and get a lightweight offline answer.\n"
             "This panel is local-first and can later grow into an Ollama-backed helper."
         )
+        self.refresh_context()
 
     def refresh_context(self) -> None:
         context = self._context()
@@ -79,6 +88,7 @@ class HelpAssistantPanel(QWidget):
         if context.get("crs"):
             pieces.append(f"CRS: {context['crs']}")
         self.context_label.setText(" | ".join(pieces) if pieces else "Offline contextual help")
+        self.backend_label.setText(f"Backend: {self.help_service.describe_backend()}")
 
     def ask_question(self) -> None:
         question = self.question_input.text().strip()
@@ -87,12 +97,20 @@ class HelpAssistantPanel(QWidget):
             return
 
         answer = self.help_service.answer(question, self._context())
+        self.backend_label.setText(f"Backend: {answer.backend}")
         self.response_view.setPlainText(
             f"Topic: {answer.topic}\n"
             f"Backend: {answer.backend}\n\n"
             f"{answer.answer}\n\n"
             f"Suggestions: {', '.join(answer.suggestions)}"
         )
+
+    def try_local_ai(self) -> None:
+        """Prefer the local AI backend when available, otherwise fallback."""
+        if hasattr(self.help_service, "set_mode"):
+            self.help_service.set_mode("ollama")
+        self.refresh_context()
+        self.ask_question()
 
     def _context(self) -> dict:
         if self.context_provider:
