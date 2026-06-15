@@ -33,6 +33,8 @@ GeoForge Studio currently ships with the following functionality:
 - **Fixtures**: Sample RINEX, DXF, and KMZ files for testing
 
 ### Export Workflows
+- **GeoJSON Export**: Save project survey points as GeoJSON
+- **Surface DXF Export**: Save TIN surfaces as DXF 3DFACE entities
 - **Map Screenshot Export**: Save the current map view as PNG
 
 ## What is NOT included ❌

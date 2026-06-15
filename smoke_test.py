@@ -42,6 +42,14 @@ def test_basic_imports():
     except ImportError as e:
         print(f"⚠ importers.kmz_importer import failed: {e}")
         return False
+
+    try:
+        from exporters.geojson_exporter import GeoJSONExporter
+        from exporters.dxf_surface_exporter import DXFSurfaceExporter
+        print("✓ exporters imports successful")
+    except ImportError as e:
+        print(f"⚠ exporters import failed: {e}")
+        return False
     
     return True
 
@@ -112,6 +120,40 @@ def test_importers():
     
     return True
 
+def test_exports():
+    """Test export workflows with sample data."""
+    print("\nTesting exports...")
+
+    try:
+        from services.project_service import Project, SurveyPoint
+        from exporters.geojson_exporter import export_project_points_geojson
+        from volume.surface import create_sample_tin
+        from exporters.dxf_surface_exporter import export_tin_surface_dxf
+
+        project = Project(
+            name="Smoke Project",
+            path="/tmp/geoforge-smoke.gfp",
+            points=[
+                SurveyPoint(id="P1", name="Point 1", x=1.0, y=2.0, z=3.0),
+                SurveyPoint(id="P2", name="Point 2", x=4.0, y=5.0, z=6.0),
+                SurveyPoint(id="P3", name="Point 3", x=7.0, y=8.0, z=9.0),
+            ],
+        )
+
+        geojson_path = export_project_points_geojson(project, "/tmp/geoforge-smoke.geojson")
+        print(f"✓ GeoJSON export successful: {geojson_path}")
+
+        surface = create_sample_tin()
+        dxf_path = export_tin_surface_dxf(surface, "/tmp/geoforge-smoke.dxf")
+        print(f"✓ Surface DXF export successful: {dxf_path}")
+
+        return True
+    except Exception as e:
+        print(f"⚠ Export smoke test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def test_rinex_fixtures():
     """Test RINEX fixtures if available."""
     print("\nTesting RINEX fixtures...")
@@ -144,6 +186,9 @@ def main():
     
     if not test_importers():
         success = False
+
+    if not test_exports():
+        success = False
     
     if not test_rinex_fixtures():
         success = False
@@ -156,6 +201,7 @@ def main():
         print("- All core modules imported successfully")
         print("- Volume calculation works with sample data")
         print("- Importers are available for DXF and KMZ files")
+        print("- Export workflows are available for GeoJSON and surface DXF")
         print("- RINEX fixtures are available (if file exists)")
         print("\nThe GeoForge Studio core functionality is working correctly.")
         return 0

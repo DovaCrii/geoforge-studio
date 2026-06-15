@@ -10,6 +10,8 @@ from datetime import datetime
 import json
 import os
 
+from exporters.geojson_exporter import export_project_points_geojson
+
 @dataclass
 class SurveyPoint:
     """Represents a survey point with GNSS coordinates."""
@@ -162,3 +164,12 @@ class ProjectService:
             return json.dumps(project.to_dict(), indent=2)
         else:
             raise ValueError(f"Unsupported export format: {format}")
+
+    def export_project_geojson(self, file_path: str, project: Optional[Project] = None) -> str:
+        """Export project survey points to GeoJSON."""
+        if project is None:
+            if self.current_project is None:
+                raise ValueError("No project to export")
+            project = self.current_project
+
+        return export_project_points_geojson(project, file_path)

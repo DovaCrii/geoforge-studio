@@ -10,7 +10,6 @@ __version__ = "0.1.0"
 __author__ = "GeoForge Studio Team"
 __email__ = "team@geoforge.studio"
 
-from .main import main
 from .volume import (
     SurveyPoint,
     Triangle,
@@ -20,7 +19,6 @@ from .volume import (
 )
 
 __all__ = [
-    "main",
     "SurveyPoint",
     "Triangle",
     "TINSurface",

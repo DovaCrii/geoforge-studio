@@ -6,7 +6,7 @@ Cut volume represents material to be removed, fill volume represents material to
 
 from dataclasses import dataclass
 from typing import List, Optional
-from src.volume.surface import SurveyPoint, Triangle, TINSurface
+from .surface import SurveyPoint, Triangle, TINSurface
 
 @dataclass
 class CutFillResult:

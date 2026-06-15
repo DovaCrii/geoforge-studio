@@ -19,6 +19,8 @@ from services.project_service import ProjectService
 from services.ppk_service import PpkService
 from importers.dxf_importer import DxfImporter
 from importers.kmz_importer import KmzImporter
+from exporters.geojson_exporter import GeoJSONExporter
+from exporters.dxf_surface_exporter import DXFSurfaceExporter
 from volume.surface import create_tin_from_points
 from volume.calculator import CutFillCalculator
 from volume.renderer import VolumeRenderer
@@ -56,6 +58,8 @@ class GeoForgeStudio:
         self.services['ppk'] = PpkService()
         self.services['dxf'] = DxfImporter()
         self.services['kmz'] = KmzImporter()
+        self.services['geojson_exporter'] = GeoJSONExporter()
+        self.services['surface_exporter'] = DXFSurfaceExporter()
         self.services['surface_factory'] = create_tin_from_points
         self.services['volume_calculator'] = CutFillCalculator()
         self.services['renderer'] = VolumeRenderer()

@@ -99,6 +99,14 @@ class MainWindow(QMainWindow):
         save_project_action.triggered.connect(self.save_project)
         file_menu.addAction(save_project_action)
 
+        export_geojson_action = QAction("Export GeoJSON...", self)
+        export_geojson_action.triggered.connect(self.export_project_geojson)
+        file_menu.addAction(export_geojson_action)
+
+        export_surface_action = QAction("Export Surface DXF...", self)
+        export_surface_action.triggered.connect(self.export_surface_dxf)
+        file_menu.addAction(export_surface_action)
+
         export_map_action = QAction("Export Map PNG...", self)
         export_map_action.triggered.connect(self.export_map_png)
         file_menu.addAction(export_map_action)
@@ -178,6 +186,64 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Project saved: {self.project_name_input.text()}")
         else:
             QMessageBox.warning(self, "Warning", "Please enter a project name")
+
+    def export_project_geojson(self):
+        """Export project points to GeoJSON."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Project as GeoJSON",
+            "project.geojson",
+            "GeoJSON Files (*.geojson)"
+        )
+        if not file_path:
+            self.status_label.setText("GeoJSON export cancelled")
+            return
+
+        try:
+            project_service = self.services.get("project")
+            if project_service is None:
+                raise ValueError("Project service is not available")
+
+            saved_path = project_service.export_project_geojson(file_path)
+            self.status_label.setText(f"GeoJSON exported: {saved_path}")
+        except Exception as exc:
+            QMessageBox.warning(self, "Export failed", str(exc))
+
+    def export_surface_dxf(self):
+        """Export a TIN surface built from current project points as DXF."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Surface as DXF",
+            "surface.dxf",
+            "DXF Files (*.dxf)"
+        )
+        if not file_path:
+            self.status_label.setText("Surface export cancelled")
+            return
+
+        try:
+            project_service = self.services.get("project")
+            surface_factory = self.services.get("surface_factory")
+            surface_exporter = self.services.get("surface_exporter")
+
+            if project_service is None or surface_factory is None:
+                raise ValueError("Surface export services are not available")
+
+            project = project_service.get_current_project()
+            if project is None or len(project.points) < 3:
+                raise ValueError("Need at least 3 survey points to export a surface")
+
+            surface = surface_factory(project.points)
+
+            if surface_exporter is None:
+                from exporters.dxf_surface_exporter import export_tin_surface_dxf
+                saved_path = export_tin_surface_dxf(surface, file_path)
+            else:
+                saved_path = surface_exporter.export_surface(surface, file_path)
+
+            self.status_label.setText(f"Surface exported: {saved_path}")
+        except Exception as exc:
+            QMessageBox.warning(self, "Export failed", str(exc))
 
     def export_map_png(self):
         """Export the current map view to a PNG image."""
