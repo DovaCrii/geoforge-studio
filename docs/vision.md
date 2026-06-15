@@ -22,6 +22,9 @@ GeoForge Studio currently ships with the following capabilities:
 - **Surface DXF Export**: Save TIN surfaces as DXF 3DFACE entities
 - **Map Screenshot Export**: Save the current map view as PNG
 
+### Help Assistant
+- **Local Help Assistant**: Lightweight offline contextual guidance with a future local-AI extension point
+
 ## Product intent
 
 The app should feel professional, clear, and optimized for field-to-office workflows.

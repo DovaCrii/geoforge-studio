@@ -50,6 +50,13 @@ def test_basic_imports():
     except ImportError as e:
         print(f"⚠ exporters import failed: {e}")
         return False
+
+    try:
+        from services.help_service import HelpService
+        print("✓ services.help_service import successful")
+    except ImportError as e:
+        print(f"⚠ help service import failed: {e}")
+        return False
     
     return True
 
@@ -154,6 +161,24 @@ def test_exports():
         traceback.print_exc()
         return False
 
+def test_help_assistant():
+    """Test the lightweight help assistant service."""
+    print("\nTesting help assistant...")
+
+    try:
+        from services.help_service import HelpService
+
+        service = HelpService()
+        answer = service.answer("Explain CRS", {"tab": "Help Assistant", "project": "Smoke Project"})
+        print(f"✓ Help assistant response topic: {answer.topic}")
+        print(f"✓ Help assistant backend: {answer.backend}")
+        return True
+    except Exception as e:
+        print(f"⚠ Help assistant smoke test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def test_rinex_fixtures():
     """Test RINEX fixtures if available."""
     print("\nTesting RINEX fixtures...")
@@ -189,6 +214,9 @@ def main():
 
     if not test_exports():
         success = False
+
+    if not test_help_assistant():
+        success = False
     
     if not test_rinex_fixtures():
         success = False
@@ -202,6 +230,7 @@ def main():
         print("- Volume calculation works with sample data")
         print("- Importers are available for DXF and KMZ files")
         print("- Export workflows are available for GeoJSON and surface DXF")
+        print("- Local help assistant is available")
         print("- RINEX fixtures are available (if file exists)")
         print("\nThe GeoForge Studio core functionality is working correctly.")
         return 0

@@ -17,6 +17,7 @@ from PyQt6.QtGui import QPixmap
 from ui.main_window import MainWindow
 from services.project_service import ProjectService
 from services.ppk_service import PpkService
+from services.help_service import HelpService
 from importers.dxf_importer import DxfImporter
 from importers.kmz_importer import KmzImporter
 from exporters.geojson_exporter import GeoJSONExporter
@@ -56,6 +57,7 @@ class GeoForgeStudio:
         # Initialize core services
         self.services['project'] = ProjectService()
         self.services['ppk'] = PpkService()
+        self.services['help'] = HelpService()
         self.services['dxf'] = DxfImporter()
         self.services['kmz'] = KmzImporter()
         self.services['geojson_exporter'] = GeoJSONExporter()

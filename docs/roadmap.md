@@ -20,7 +20,7 @@ GeoForge Studio has completed the core application development:
 
 - ✅ Volumes (TIN surfaces, cut/fill calculations)
 - ✅ Export workflows (CSV volume export, GeoJSON export, surface DXF export, map PNG export)
-- ⏳ UX polish (planned)
+- ✅ Local help assistant (offline contextual help)
 - ⏳ Optional AI/chatbot layer later (planned)
 
 ## Future track

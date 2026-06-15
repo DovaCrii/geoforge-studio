@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QAction
 
 from ui.map_canvas import MapCanvas, QtMapRenderer
+from ui.help_assistant import HelpAssistantPanel
 from ui.volume_panel import VolumePanel
 from services.project_service import ProjectService
 from services.ppk_service import PpkService
@@ -64,6 +65,13 @@ class MainWindow(QMainWindow):
         
         # Add map workspace to tab widget
         self.tab_widget.addTab(self.map_workspace, "🗺️ Map Workspace")
+
+        # Help assistant workspace tab
+        self.help_workspace = QWidget()
+        help_layout = QVBoxLayout(self.help_workspace)
+        self.help_panel = HelpAssistantPanel(self.services, context_provider=self.get_help_context)
+        help_layout.addWidget(self.help_panel)
+        self.tab_widget.addTab(self.help_workspace, "🧭 Help Assistant")
         
         # Create volume analysis workspace tab
         self.volume_workspace = QWidget()
@@ -134,6 +142,9 @@ class MainWindow(QMainWindow):
         
         # Help menu
         help_menu = menubar.addMenu("Help")
+        open_help_action = QAction("Open Help Assistant", self)
+        open_help_action.triggered.connect(self.open_help_assistant)
+        help_menu.addAction(open_help_action)
         
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about)
@@ -244,6 +255,28 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Surface exported: {saved_path}")
         except Exception as exc:
             QMessageBox.warning(self, "Export failed", str(exc))
+
+    def open_help_assistant(self):
+        """Switch to the Help Assistant tab."""
+        self.tab_widget.setCurrentWidget(self.help_workspace)
+        self.help_panel.refresh_context()
+
+    def get_help_context(self):
+        """Build lightweight context for the help assistant."""
+        project_service = self.services.get("project")
+        project = project_service.get_current_project() if project_service else None
+        current_tab = self.tab_widget.tabText(self.tab_widget.currentIndex())
+        crs_text = None
+        if hasattr(self, "map_canvas"):
+            crs = self.map_canvas.get_crs()
+            crs_text = crs.to_string() if crs else None
+
+        return {
+            "tab": current_tab,
+            "project": project.name if project else None,
+            "crs": crs_text,
+            "status": self.status_label.text(),
+        }
 
     def export_map_png(self):
         """Export the current map view to a PNG image."""
