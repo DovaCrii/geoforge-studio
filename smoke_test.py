@@ -179,6 +179,63 @@ def test_help_assistant():
         traceback.print_exc()
         return False
 
+def test_importer_error_handling():
+    """Test that importers handle malformed files gracefully."""
+    print("\nTesting importer error handling...")
+    success = True
+    
+    try:
+        from importers.dxf_importer import DxfImporter
+        
+        # Test 1: Non-existent file
+        importer = DxfImporter()
+        result = importer.import_dxf("/tmp/nonexistent_file.dxf")
+        assert not result.success, "Should fail for nonexistent file"
+        assert "not found" in result.message.lower(), f"Unexpected message: {result.message}"
+        print("✓ DXF: nonexistent file returns error message")
+        
+        # Test 2: Empty file
+        empty_dxf = Path("/tmp/geoforge-test-empty.dxf")
+        empty_dxf.write_text("")
+        result = importer.import_dxf(str(empty_dxf))
+        assert not result.success, "Should fail for empty DXF"
+        empty_dxf.unlink(missing_ok=True)
+        print("✓ DXF: empty file handled without crash")
+        
+    except Exception as e:
+        print(f"⚠ DXF error handling test failed: {e}")
+        success = False
+    
+    try:
+        from importers.kmz_importer import KmzImporter
+        
+        # Test 3: Non-existent file
+        importer = KmzImporter()
+        result = importer.import_kmz("/tmp/nonexistent_file.kmz")
+        assert not result.success, "Should fail for nonexistent file"
+        assert "not found" in result.message.lower(), f"Unexpected message: {result.message}"
+        print("✓ KMZ: nonexistent file returns error message")
+        
+        # Test 4: Corrupt zip
+        corrupt_kmz = Path("/tmp/geoforge-test-corrupt.kmz")
+        corrupt_kmz.write_bytes(b"not a zip file content here")
+        result = importer.import_kmz(str(corrupt_kmz))
+        assert not result.success, "Should fail for corrupt KMZ"
+        corrupt_kmz.unlink(missing_ok=True)
+        print("✓ KMZ: corrupt file handled without crash")
+        
+        # Test 5: KML with invalid file path
+        result = importer.import_kml("")
+        assert not result.success, "Should fail for empty path"
+        print("✓ KML: empty path returns error")
+        
+    except Exception as e:
+        print(f"⚠ KMZ error handling test failed: {e}")
+        success = False
+    
+    return success
+
+
 def test_rinex_fixtures():
     """Test RINEX fixtures if available."""
     print("\nTesting RINEX fixtures...")
@@ -220,6 +277,9 @@ def main():
     
     if not test_rinex_fixtures():
         success = False
+
+    if not test_importer_error_handling():
+        success = False
     
     print("\n" + "=" * 50)
     
@@ -232,6 +292,8 @@ def main():
         print("- Export workflows are available for GeoJSON and surface DXF")
         print("- Local help assistant is available")
         print("- RINEX fixtures are available (if file exists)")
+        print("- Importers handle malformed files without crashing")
+        print("- File validation and error messages work correctly")
         print("\nThe GeoForge Studio core functionality is working correctly.")
         return 0
     else:
