@@ -13,9 +13,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
+    QSlider,
+    QLabel,
 )
-from PyQt6.QtCore import Qt, QPointF, QRectF
-from PyQt6.QtGui import QPen, QBrush, QColor, QPainter
+from PyQt6.QtCore import Qt, QPointF, QRectF, pyqtSignal
+from PyQt6.QtGui import (
+    QPen, QBrush, QColor, QPainter,
+    QShortcut, QKeySequence, QAction,
+)
 import pyproj
 
 # Import CRS utilities
@@ -391,14 +396,28 @@ class MapCanvas(QWidget):
     """Map canvas widget for displaying geospatial data.
     
     This widget provides a container for the map renderer and handles
-    user interactions for map navigation.
+    user interactions for map navigation. Supports zoom controls,
+    mouse wheel zoom, keyboard shortcuts, layer management,
+    and real-time coordinate display.
     """
+    
+    coords_changed = pyqtSignal(float, float, str)
     
     def __init__(self, services: dict, renderer: MapRenderer):
         super().__init__()
         self.services = services
         self.renderer = renderer
+        
+        self._zoom_level: int = 0
+        self._zoom_min: int = -10
+        self._zoom_max: int = 10
+        self._is_panning: bool = False
+        self._last_mouse_pos: Optional[QPointF] = None
+        self._layer_registry: Dict[str, dict] = {}
+        
+        self.setMouseTracking(True)
         self.setup_ui()
+        self.setup_shortcuts()
     
     def setup_ui(self):
         """Set up the map canvas user interface."""
@@ -407,50 +426,187 @@ class MapCanvas(QWidget):
         
         # Create layout
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         
         # Add the renderer's widget to the layout
         layout.addWidget(self.renderer.get_widget())
         
-        # Add some basic controls
+        # Add controls toolbar
         controls = QHBoxLayout()
+        controls.setSpacing(4)
         
-        zoom_in_button = QPushButton("Zoom In")
-        zoom_in_button.clicked.connect(self.zoom_in)
-        controls.addWidget(zoom_in_button)
+        zoom_out_btn = QPushButton("−")
+        zoom_out_btn.setFixedWidth(32)
+        zoom_out_btn.setToolTip("Zoom out (Ctrl+Scroll down)")
+        zoom_out_btn.clicked.connect(self.zoom_out)
+        controls.addWidget(zoom_out_btn)
         
-        zoom_out_button = QPushButton("Zoom Out")
-        zoom_out_button.clicked.connect(self.zoom_out)
-        controls.addWidget(zoom_out_button)
+        self._zoom_slider = QSlider(Qt.Orientation.Horizontal)
+        self._zoom_slider.setRange(self._zoom_min, self._zoom_max)
+        self._zoom_slider.setValue(0)
+        self._zoom_slider.setFixedWidth(120)
+        self._zoom_slider.setToolTip("Zoom level")
+        self._zoom_slider.valueChanged.connect(self._on_slider_zoom)
+        controls.addWidget(self._zoom_slider)
         
-        zoom_extents_button = QPushButton("Zoom to Extents")
-        zoom_extents_button.clicked.connect(self.zoom_to_extents)
-        controls.addWidget(zoom_extents_button)
-
-        clear_button = QPushButton("Clear Map")
-        clear_button.clicked.connect(self.clear_map)
-        controls.addWidget(clear_button)
+        zoom_in_btn = QPushButton("+")
+        zoom_in_btn.setFixedWidth(32)
+        zoom_in_btn.setToolTip("Zoom in (Ctrl+Scroll up)")
+        zoom_in_btn.clicked.connect(self.zoom_in)
+        controls.addWidget(zoom_in_btn)
+        
+        self._zoom_label = QLabel("0")
+        self._zoom_label.setFixedWidth(30)
+        self._zoom_label.setToolTip("Current zoom level")
+        controls.addWidget(self._zoom_label)
+        
+        controls.addStretch()
+        
+        zoom_extents_btn = QPushButton("⊞ Extents")
+        zoom_extents_btn.setToolTip("Zoom to fit all layers (Z)")
+        zoom_extents_btn.clicked.connect(self.zoom_to_extents)
+        controls.addWidget(zoom_extents_btn)
+        
+        pan_btn = QPushButton("✋ Pan")
+        pan_btn.setCheckable(True)
+        pan_btn.setToolTip("Toggle pan mode (P)")
+        pan_btn.toggled.connect(self._toggle_pan_mode)
+        controls.addWidget(pan_btn)
+        
+        clear_btn = QPushButton("Clear")
+        clear_btn.setToolTip("Clear all layers")
+        clear_btn.clicked.connect(self.clear_map)
+        controls.addWidget(clear_btn)
         
         layout.addLayout(controls)
     
+    def setup_shortcuts(self):
+        """Set up keyboard shortcuts for map navigation."""
+        # Z → zoom to extents
+        QShortcut(QKeySequence("Z"), self, self.zoom_to_extents)
+        # P → toggle pan mode
+        QShortcut(QKeySequence("P"), self, self._toggle_pan_mode_shortcut)
+        # Space → fit all
+        QShortcut(QKeySequence(Qt.Key.Key_Space), self, self.zoom_to_extents)
+    
+    def _toggle_pan_mode_shortcut(self):
+        """Toggle pan mode from keyboard shortcut."""
+        for btn in self.findChildren(QPushButton):
+            if btn.text() == "✋ Pan":
+                btn.toggle()
+                break
+    
+    def _toggle_pan_mode(self, active: bool):
+        """Toggle pan mode on/off."""
+        self._is_panning = active
+        view = self.renderer.get_widget()
+        if active:
+            view.setCursor(Qt.CursorShape.OpenHandCursor)
+            view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        else:
+            view.setCursor(Qt.CursorShape.ArrowCursor)
+            view.setDragMode(QGraphicsView.DragMode.NoDrag)
+    
+    def _on_slider_zoom(self, value: int):
+        """Handle zoom slider value change."""
+        self._zoom_level = value
+        self._zoom_label.setText(str(value))
+        # Calculate scale factor relative to default
+        factor = 1.15 ** value if value >= 0 else 1.0 / (1.15 ** abs(value))
+        view = self.renderer.get_widget()
+        view.resetTransform()
+        view.scale(factor, factor)
+    
+    def wheelEvent(self, event):
+        """Handle mouse wheel for zooming."""
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            delta = event.angleDelta().y()
+            if delta > 0:
+                self.zoom_in()
+            else:
+                self.zoom_out()
+            event.accept()
+        else:
+            super().wheelEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        """Track mouse position for coordinate display."""
+        super().mouseMoveEvent(event)
+        view = self.renderer.get_widget()
+        if isinstance(view, QGraphicsView):
+            scene_pos = view.mapToScene(event.position().toPoint())
+            crs = self.renderer.get_crs() if hasattr(self.renderer, 'get_crs') else None
+            if crs and hasattr(crs, 'to_epsg') and crs.to_epsg():
+                self.coords_changed.emit(scene_pos.x(), scene_pos.y(), f"EPSG:{crs.to_epsg()}")
+            else:
+                self.coords_changed.emit(scene_pos.x(), scene_pos.y(), "CRS not set")
+    
     def zoom_in(self):
         """Zoom in the map."""
-        if hasattr(self.renderer, 'zoom_in'):
-            self.renderer.zoom_in()
+        if self._zoom_level < self._zoom_max:
+            self._zoom_level += 1
+            self._zoom_slider.setValue(self._zoom_level)
     
     def zoom_out(self):
         """Zoom out the map."""
-        if hasattr(self.renderer, 'zoom_out'):
-            self.renderer.zoom_out()
+        if self._zoom_level > self._zoom_min:
+            self._zoom_level -= 1
+            self._zoom_slider.setValue(self._zoom_level)
     
     def zoom_to_extents(self):
         """Zoom to show all data."""
+        self._zoom_level = 0
+        self._zoom_slider.setValue(0)
         if hasattr(self.renderer, 'zoom_to_extents'):
             self.renderer.zoom_to_extents()
 
     def clear_map(self):
         """Clear all map layers and overlays."""
+        self._layer_registry.clear()
         if hasattr(self.renderer, 'clear'):
             self.renderer.clear()
+    
+    def register_layer(self, name: str, layer_type: str, items: list) -> None:
+        """Register a layer for visibility management.
+        
+        Args:
+            name: Unique layer name
+            layer_type: Type identifier (dxf, kmz, points, etc.)
+            items: List of QGraphicsItems in this layer
+        """
+        self._layer_registry[name] = {
+            "visible": True,
+            "items": list(items),
+            "layer_type": layer_type,
+        }
+    
+    def set_layer_visible(self, name: str, visible: bool) -> None:
+        """Set a layer's visibility.
+        
+        Args:
+            name: Layer name to toggle
+            visible: True to show, False to hide
+        """
+        layer = self._layer_registry.get(name)
+        if layer:
+            layer["visible"] = visible
+            for item in layer["items"]:
+                item.setVisible(visible)
+    
+    def toggle_layer(self, name: str) -> None:
+        """Toggle a layer's visibility.
+        
+        Args:
+            name: Layer name to toggle
+        """
+        layer = self._layer_registry.get(name)
+        if layer:
+            self.set_layer_visible(name, not layer["visible"])
+    
+    def get_layer_names(self) -> list:
+        """Get all registered layer names."""
+        return list(self._layer_registry.keys())
     
     def load_project(self, project_name: str):
         """Load a project and display its data on the map."""
