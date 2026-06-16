@@ -248,8 +248,16 @@ class MainWindow(QMainWindow):
             self.map_canvas.load_dxf_overlay(result)
             self.tab_widget.setCurrentWidget(self.map_workspace)
             self.status_label.setText(f"DXF imported: {Path(file_path).name}")
+            
+            # Surface warnings
+            if hasattr(result, 'warnings') and result.warnings:
+                for w in result.warnings[:3]:
+                    self.status_label.setText(f"Warning: {w}")
+                if len(result.warnings) > 3:
+                    QMessageBox.information(self, "DXF Import Warnings",
+                        f"{len(result.warnings)} warnings:\n" + "\n".join(result.warnings[:10]))
         except Exception as exc:
-            QMessageBox.warning(self, "Import failed", str(exc))
+            QMessageBox.warning(self, "DXF Import Failed", str(exc))
 
     def import_kmz_kml(self):
         """Import a KMZ or KML file and display it on the map."""
@@ -280,6 +288,14 @@ class MainWindow(QMainWindow):
             self.map_canvas.load_kml_overlay(result)
             self.tab_widget.setCurrentWidget(self.map_workspace)
             self.status_label.setText(f"KMZ/KML imported: {Path(file_path).name}")
+            
+            # Surface warnings
+            if hasattr(result, 'warnings') and result.warnings:
+                for w in result.warnings[:3]:
+                    self.status_label.setText(f"Warning: {w}")
+                if len(result.warnings) > 3:
+                    QMessageBox.information(self, "KMZ Import Warnings",
+                        f"{len(result.warnings)} warnings:\n" + "\n".join(result.warnings[:10]))
         except Exception as exc:
             QMessageBox.warning(self, "Import failed", str(exc))
 

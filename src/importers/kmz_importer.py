@@ -35,6 +35,7 @@ class KmlImportResult:
     
     success: bool
     placemarks: List[KmlPlacemark] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     message: str = ""
     file_path: str = ""
     
@@ -43,6 +44,7 @@ class KmlImportResult:
         return {
             "success": self.success,
             "placemarks": [p.to_dict() for p in self.placemarks],
+            "warnings": self.warnings,
             "message": self.message,
             "file_path": self.file_path,
         }
@@ -53,17 +55,26 @@ class KmzImporter:
     def __init__(self):
         self.supported_formats = {".kml", ".kmz"}
         
+    def _validate_file(self, file_path: str, expected_ext: str) -> Optional[str]:
+        """Validate file exists and has correct extension. Returns error message or None."""
+        if not file_path:
+            return "No file path provided"
+        from pathlib import Path
+        if not Path(file_path).exists():
+            return f"File not found: {file_path}"
+        if not file_path.lower().endswith(expected_ext):
+            return f"File is not a {expected_ext} file (needs {expected_ext} extension)"
+        return None
+    
     def import_kmz(self, file_path: str) -> KmlImportResult:
         """Import KMZ file and return placemarks."""
+        warnings: List[str] = []
+        
+        error = self._validate_file(file_path, '.kmz')
+        if error:
+            return KmlImportResult(success=False, message=error, file_path=file_path)
+        
         try:
-            # Validate file exists
-            if not file_path or not file_path.lower().endswith('.kmz'):
-                return KmlImportResult(
-                    success=False,
-                    message="Invalid KMZ file path",
-                    file_path=file_path
-                )
-                
             # Check if it's a KMZ file (zip archive)
             if not zipfile.is_zipfile(file_path):
                 return KmlImportResult(
@@ -73,20 +84,38 @@ class KmzImporter:
                 )
                 
             # Extract KML from KMZ
-            with zipfile.ZipFile(file_path, 'r') as zipf:
-                kml_files = [f for f in zipf.namelist() if f.lower().endswith('.kml')]
-                if not kml_files:
-                    return KmlImportResult(
-                        success=False,
-                        message="No KML file found in KMZ archive",
-                        file_path=file_path
-                    )
+            try:
+                with zipfile.ZipFile(file_path, 'r') as zipf:
+                    # Check for corrupt zip
+                    bad_file = zipf.testzip()
+                    if bad_file:
+                        return KmlImportResult(
+                            success=False,
+                            message=f"Corrupted KMZ archive: '{bad_file}' is damaged",
+                            file_path=file_path
+                        )
                     
-                # Read the first KML file
-                kml_content = zipf.read(kml_files[0]).decode('utf-8')
+                    kml_files = [f for f in zipf.namelist() if f.lower().endswith('.kml')]
+                    if not kml_files:
+                        return KmlImportResult(
+                            success=False,
+                            message="No KML file found in KMZ archive",
+                            file_path=file_path
+                        )
+                        
+                    # Read the first KML file
+                    kml_content = zipf.read(kml_files[0]).decode('utf-8')
+            except (zipfile.BadZipFile, EOFError) as e:
+                return KmlImportResult(
+                    success=False,
+                    message=f"Invalid or corrupted KMZ file: {e}",
+                    file_path=file_path
+                )
                 
             # Parse KML content
-            return self._parse_kml_content(kml_content, file_path)
+            result = self._parse_kml_content(kml_content, file_path)
+            result.warnings = warnings
+            return result
             
         except Exception as e:
             return KmlImportResult(
@@ -97,21 +126,28 @@ class KmzImporter:
             
     def import_kml(self, file_path: str) -> KmlImportResult:
         """Import KML file and return placemarks."""
+        warnings: List[str] = []
+        
+        error = self._validate_file(file_path, '.kml')
+        if error:
+            return KmlImportResult(success=False, message=error, file_path=file_path)
+        
         try:
-            # Validate file exists
-            if not file_path or not file_path.lower().endswith('.kml'):
+            # Read KML file
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    kml_content = f.read()
+            except (IOError, UnicodeDecodeError) as e:
                 return KmlImportResult(
                     success=False,
-                    message="Invalid KML file path",
+                    message=f"Error reading KML file: {e}",
                     file_path=file_path
                 )
                 
-            # Read KML file
-            with open(file_path, 'r', encoding='utf-8') as f:
-                kml_content = f.read()
-                
             # Parse KML content
-            return self._parse_kml_content(kml_content, file_path)
+            result = self._parse_kml_content(kml_content, file_path)
+            result.warnings = warnings
+            return result
             
         except Exception as e:
             return KmlImportResult(
@@ -122,6 +158,8 @@ class KmzImporter:
             
     def _parse_kml_content(self, kml_content: str, file_path: str) -> KmlImportResult:
         """Parse KML content and extract placemarks."""
+        warnings: List[str] = []
+        
         try:
             root = ET.fromstring(kml_content)
             
@@ -132,47 +170,71 @@ class KmzImporter:
             }
             
             placemarks = []
+            skipped_bad_coords = 0
+            skipped_parse_error = 0
             
             # Find all placemark elements
             for placemark in root.findall('.//kml:Placemark', ns):
-                name = placemark.findtext('.//kml:name', namespaces=ns) or "Unnamed Placemark"
-                description = placemark.findtext('.//kml:description', namespaces=ns) or ""
-                style_url = placemark.findtext('.//kml:styleUrl', namespaces=ns) or ""
-                
-                # Extract coordinates
-                coordinates = []
-                coord_elements = placemark.findall('.//kml:coordinates', ns)
-                
-                for coord_elem in coord_elements:
-                    coord_text = coord_elem.text
-                    if coord_text:
-                        for coord_str in coord_text.strip().split():
-                            coords = coord_str.split(',')
-                            if len(coords) >= 2:
-                                try:
-                                    x = float(coords[0])
-                                    y = float(coords[1])
-                                    z = float(coords[2]) if len(coords) > 2 else 0.0
-                                    coordinates.append((x, y, z))
-                                except ValueError:
-                                    continue
-                                    
-                placemark_obj = KmlPlacemark(
-                    name=name,
-                    description=description,
-                    coordinates=coordinates,
-                    style_url=style_url
-                )
-                
-                placemarks.append(placemark_obj)
-                
+                try:
+                    name = placemark.findtext('.//kml:name', namespaces=ns) or "Unnamed Placemark"
+                    description = placemark.findtext('.//kml:description', namespaces=ns) or ""
+                    style_url = placemark.findtext('.//kml:styleUrl', namespaces=ns) or ""
+                    
+                    # Extract coordinates
+                    coordinates = []
+                    coord_elements = placemark.findall('.//kml:coordinates', ns)
+                    
+                    for coord_elem in coord_elements:
+                        coord_text = coord_elem.text
+                        if coord_text:
+                            for coord_str in coord_text.strip().split():
+                                coords = coord_str.split(',')
+                                if len(coords) >= 2:
+                                    try:
+                                        x = float(coords[0])
+                                        y = float(coords[1])
+                                        z = float(coords[2]) if len(coords) > 2 else 0.0
+                                        coordinates.append((x, y, z))
+                                    except ValueError:
+                                        continue
+                    
+                    if not coordinates:
+                        warnings.append(f"Skipped placemark '{name}' — no valid coordinates found")
+                        skipped_bad_coords += 1
+                        continue
+                    
+                    placemark_obj = KmlPlacemark(
+                        name=name,
+                        description=description,
+                        coordinates=coordinates,
+                        style_url=style_url
+                    )
+                    
+                    placemarks.append(placemark_obj)
+                except Exception as e:
+                    warnings.append(f"Skipped a placemark due to parse error: {e}")
+                    skipped_parse_error += 1
+                    
+            parts = [f"Imported {len(placemarks)} placemarks"]
+            if skipped_bad_coords:
+                parts.append(f"{skipped_bad_coords} skipped (no valid coordinates)")
+            if skipped_parse_error:
+                parts.append(f"{skipped_parse_error} skipped (parse errors)")
+            
             return KmlImportResult(
                 success=True,
                 placemarks=placemarks,
-                message=f"Successfully imported {len(placemarks)} placemarks",
+                warnings=warnings,
+                message="; ".join(parts),
                 file_path=file_path
             )
             
+        except ET.ParseError as e:
+            return KmlImportResult(
+                success=False,
+                message=f"Invalid KML XML: {e}",
+                file_path=file_path
+            )
         except Exception as e:
             return KmlImportResult(
                 success=False,

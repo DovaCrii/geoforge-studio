@@ -37,6 +37,7 @@ class DxfImportResult:
     
     success: bool
     entities: List[DxfEntity] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     message: str = ""
     file_path: str = ""
     
@@ -45,6 +46,7 @@ class DxfImportResult:
         return {
             "success": self.success,
             "entities": [e.to_dict() for e in self.entities],
+            "warnings": self.warnings,
             "message": self.message,
             "file_path": self.file_path,
         }
@@ -62,57 +64,108 @@ class DxfImporter:
         
     def import_dxf(self, file_path: str) -> DxfImportResult:
         """Import DXF file and return entities."""
+        warnings: List[str] = []
+        
         try:
             # Validate file exists
-            if not file_path or not file_path.endswith('.dxf'):
+            if not file_path:
                 return DxfImportResult(
                     success=False,
-                    message="Invalid DXF file path",
+                    message="No file path provided",
+                    file_path=file_path
+                )
+            
+            from pathlib import Path
+            if not Path(file_path).exists():
+                return DxfImportResult(
+                    success=False,
+                    message=f"File not found: {file_path}",
+                    file_path=file_path
+                )
+            
+            if not file_path.lower().endswith('.dxf'):
+                return DxfImportResult(
+                    success=False,
+                    message="File is not a DXF file (needs .dxf extension)",
                     file_path=file_path
                 )
                 
             # Try to read DXF file
-            doc = ezdxf.readfile(file_path)
+            try:
+                doc = ezdxf.readfile(file_path)
+            except ezdxf.DXFStructureError as e:
+                return DxfImportResult(
+                    success=False,
+                    message=f"Invalid or corrupted DXF file: {e}",
+                    file_path=file_path
+                )
             
             if doc is None:
                 return DxfImportResult(
                     success=False,
-                    message="Failed to read DXF file",
+                    message="Failed to read DXF file (returned empty)",
                     file_path=file_path
                 )
                 
             entities = []
+            skipped_unsupported = 0
+            skipped_layer = 0
+            skipped_error = 0
             
-            # Process modelspace entities once to avoid duplicating entities per layer
+            # Process modelspace entities
             for entity in doc.modelspace():
-                if entity.dxftype() not in self.supported_entities:
+                entity_type = entity.dxftype()
+                
+                if entity_type not in self.supported_entities:
+                    skipped_unsupported += 1
                     continue
 
                 entity_layer = getattr(entity.dxf, "layer", "")
                 if entity_layer not in self.supported_layers:
+                    skipped_layer += 1
                     continue
 
-                # Extract entity data
-                entity_data = DxfEntity(
-                    handle=str(entity.dxf.handle),
-                    layer=entity_layer,
-                    type=entity.dxftype(),
-                    points=self._extract_points(entity),
-                    attributes=self._extract_attributes(entity)
-                )
-
-                entities.append(entity_data)
+                # Extract entity data with per-entity error handling
+                try:
+                    points = self._extract_points(entity)
+                    if not points:
+                        warnings.append(f"Skipped {entity_type} on layer '{entity_layer}' — no points extracted")
+                        skipped_error += 1
+                        continue
                     
+                    entity_data = DxfEntity(
+                        handle=str(entity.dxf.handle),
+                        layer=entity_layer,
+                        type=entity_type,
+                        points=points,
+                        attributes=self._extract_attributes(entity)
+                    )
+                    entities.append(entity_data)
+                except Exception as e:
+                    warnings.append(f"Skipped {entity_type} (handle {getattr(entity.dxf, 'handle', '?')}): {e}")
+                    skipped_error += 1
+            
+            # Build summary message
+            parts = [f"Imported {len(entities)} entities"]
+            if skipped_unsupported:
+                parts.append(f"{skipped_unsupported} unsupported types skipped")
+            if skipped_layer:
+                parts.append(f"{skipped_layer} skipped by layer filter")
+            if skipped_error:
+                parts.append(f"{skipped_error} skipped due to errors")
+            
             return DxfImportResult(
                 success=True,
                 entities=entities,
-                message=f"Successfully imported {len(entities)} entities",
+                warnings=warnings,
+                message="; ".join(parts),
                 file_path=file_path
             )
             
         except Exception as e:
             return DxfImportResult(
                 success=False,
+                warnings=warnings,
                 message=f"Error importing DXF file: {str(e)}",
                 file_path=file_path
             )
@@ -121,38 +174,33 @@ class DxfImporter:
         """Extract points from DXF entity."""
         points = []
         
-        try:
-            if entity.dxftype() == "LINE":
-                points = [
-                    (entity.dxf.start.x, entity.dxf.start.y, 0.0),
-                    (entity.dxf.end.x, entity.dxf.end.y, 0.0)
-                ]
-            elif entity.dxftype() in ("LWPOLYLINE", "POLYLINE"):
-                for vertex in entity.vertices:
-                    points.append((vertex.dxf.x, vertex.dxf.y, 0.0))
-            elif entity.dxftype() == "CIRCLE":
-                center = (entity.dxf.center.x, entity.dxf.center.y, 0.0)
-                radius = entity.dxf.radius
-                # Add circle points for visualization
-                for angle in range(0, 360, 30):
-                    rad = math.radians(angle)
-                    x = center[0] + radius * math.cos(rad)
-                    y = center[1] + radius * math.sin(rad)
-                    points.append((x, y, 0.0))
-            elif entity.dxftype() == "ARC":
-                center = (entity.dxf.center.x, entity.dxf.center.y, 0.0)
-                radius = entity.dxf.radius
-                start_angle = entity.dxf.start_angle
-                end_angle = entity.dxf.end_angle
-                
-                for angle in range(int(start_angle), int(end_angle) + 1, 30):
-                    rad = math.radians(angle)
-                    x = center[0] + radius * math.cos(rad)
-                    y = center[1] + radius * math.sin(rad)
-                    points.append((x, y, 0.0))
-                    
-        except Exception:
-            pass
+        if entity.dxftype() == "LINE":
+            points = [
+                (entity.dxf.start.x, entity.dxf.start.y, 0.0),
+                (entity.dxf.end.x, entity.dxf.end.y, 0.0)
+            ]
+        elif entity.dxftype() in ("LWPOLYLINE", "POLYLINE"):
+            for vertex in entity.vertices:
+                points.append((vertex.dxf.x, vertex.dxf.y, 0.0))
+        elif entity.dxftype() == "CIRCLE":
+            center = (entity.dxf.center.x, entity.dxf.center.y, 0.0)
+            radius = entity.dxf.radius
+            for angle in range(0, 360, 30):
+                rad = math.radians(angle)
+                x = center[0] + radius * math.cos(rad)
+                y = center[1] + radius * math.sin(rad)
+                points.append((x, y, 0.0))
+        elif entity.dxftype() == "ARC":
+            center = (entity.dxf.center.x, entity.dxf.center.y, 0.0)
+            radius = entity.dxf.radius
+            start_angle = entity.dxf.start_angle
+            end_angle = entity.dxf.end_angle
+            
+            for angle in range(int(start_angle), int(end_angle) + 1, 30):
+                rad = math.radians(angle)
+                x = center[0] + radius * math.cos(rad)
+                y = center[1] + radius * math.sin(rad)
+                points.append((x, y, 0.0))
             
         return points
         
