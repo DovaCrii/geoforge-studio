@@ -17,6 +17,7 @@ from PyQt6.QtGui import QIcon, QAction
 from ui.map_canvas import MapCanvas, QtMapRenderer
 from ui.help_assistant import HelpAssistantPanel
 from ui.volume_panel import VolumePanel
+from ui.composer import ComposerWidget
 from services.project_service import ProjectService
 from services.ppk_service import PpkService
 
@@ -84,6 +85,10 @@ class MainWindow(QMainWindow):
         
         self.tab_widget.addTab(self.volume_workspace, "📊 Volume Analysis")
         
+        # Composer / Print Layout tab
+        self.composer = ComposerWidget(self.map_canvas, self.services)
+        self.tab_widget.addTab(self.composer, "🖨️ Composer")
+        
         # Add tab widget to main layout
         main_layout.addWidget(self.tab_widget)
         
@@ -128,7 +133,11 @@ class MainWindow(QMainWindow):
         export_map_action = QAction("Export Map PNG...", self)
         export_map_action.triggered.connect(self.export_map_png)
         file_menu.addAction(export_map_action)
-        
+
+        export_pdf_action = QAction("Export Layout as PDF...", self)
+        export_pdf_action.triggered.connect(self.export_layout_pdf)
+        file_menu.addAction(export_pdf_action)
+
         file_menu.addSeparator()
         
         exit_action = QAction("Exit", self)
@@ -374,6 +383,11 @@ class MainWindow(QMainWindow):
             self.status_label.setText(f"Map exported: {file_path}")
         else:
             QMessageBox.warning(self, "Export failed", "Could not save the map image")
+
+    def export_layout_pdf(self):
+        """Export the composer layout as PDF."""
+        self.tab_widget.setCurrentWidget(self.composer)
+        self.composer.export_pdf()
             
     def run_ppk(self):
         """Run PPK processing."""
