@@ -1,36 +1,33 @@
 # Roadmap 🚀
 
-## Phase 1 — Planning
+## Phase 1 — Solidify the shell ✅
 
-- Market research
-- Product proposal
-- Delta specs
-- Technical design
+- App skeleton and UI shell
+- Map rendering and overlays
+- DXF / KMZ import and export basics
+- Volume workflows and local help
 
-## Phase 2 — Core app (COMPLETED)
+## Phase 2 — GNSS core 🔧
 
-GeoForge Studio has completed the core application development:
+- Real RINEX parsing
+- Real PPK processing
+- Ephemeris handling
+- Base/rover import workflow in UI
 
-- ✅ App skeleton (Python + Rust maturin bridge)
-- ✅ Data import pipeline (DXF, KMZ/KML read-only)
-- ✅ Map rendering (2D with CRS support)
-- ✅ GNSS processing core (RINEX parsing, PPK algorithms)
+## Phase 3 — Commercial polish ✨
 
-## Phase 3 — Product polish (IN PROGRESS)
+- Better map UX and layer controls
+- CRS selection in UI
+- Safer warnings for missing prerequisites
+- Clearer help panels and workflow hints
 
-- ✅ Volumes (TIN surfaces, cut/fill calculations)
-- ✅ Export workflows (CSV volume export, GeoJSON export, surface DXF export, map PNG export)
-- ✅ Local help assistant (offline contextual help, Ollama-ready)
-- ⏳ Optional AI/chatbot layer later (online fallback or richer orchestration)
+## Phase 4 — Release readiness 📦
 
-## Future track
-
-- Separate web point-cloud / IFC viewer project
-- Advanced 3D visualization
-- Real-time GNSS streaming
-- Cloud storage integration
-- Multi-user collaboration
+- License decision
+- Packaging and install flow
+- Docs cleanup
+- Optional CI / automated checks
 
 ## Current state
 
-GeoForge Studio is production-ready for the core survey workflow tasks. The application is focused on delivering professional-grade GNSS processing, volume analysis, and geospatial visualization in a clean, offline-first package.
+GeoForge Studio is solid at the UI / volume / import-export layer, but the GNSS core still needs real implementation before any public release claim.

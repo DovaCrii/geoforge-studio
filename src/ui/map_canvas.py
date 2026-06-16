@@ -425,6 +425,10 @@ class MapCanvas(QWidget):
         zoom_extents_button = QPushButton("Zoom to Extents")
         zoom_extents_button.clicked.connect(self.zoom_to_extents)
         controls.addWidget(zoom_extents_button)
+
+        clear_button = QPushButton("Clear Map")
+        clear_button.clicked.connect(self.clear_map)
+        controls.addWidget(clear_button)
         
         layout.addLayout(controls)
     
@@ -442,6 +446,11 @@ class MapCanvas(QWidget):
         """Zoom to show all data."""
         if hasattr(self.renderer, 'zoom_to_extents'):
             self.renderer.zoom_to_extents()
+
+    def clear_map(self):
+        """Clear all map layers and overlays."""
+        if hasattr(self.renderer, 'clear'):
+            self.renderer.clear()
     
     def load_project(self, project_name: str):
         """Load a project and display its data on the map."""

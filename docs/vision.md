@@ -2,37 +2,34 @@
 
 GeoForge Studio is a desktop-native geospatial workstation for survey and GNSS work.
 
-It is designed to stay offline-first, readable, and focused on the core tasks survey users do repeatedly.
+It should feel modern, calm, and commercially credible: fast for daily field-to-office work, offline-first, and easy to trust.
 
-## First slice
+## What it should do well
 
-GeoForge Studio currently ships with the following capabilities:
+- 🗺️ Show survey data clearly on a 2D map
+- 📥 Import common geospatial files without drama
+- 📤 Export clean deliverables for handoff and review
+- 🧭 Help users stay unblocked with contextual guidance
+- ⚠️ Warn instead of crashing when inputs are missing
 
-### Core Processing
-- **GNSS Post-Processing**: RINEX observation and navigation file parsing, PPK algorithms
-- **Volume Analysis**: TIN surface generation from survey points, cut/fill volume calculations
-- **Map Visualization**: 2D map rendering with coordinate reference system support
+## Current reality
 
-### Import Capabilities
-- **DXF Import**: Read-only import of common DXF entities (lines, polylines)
-- **KMZ/KML Import**: Read-only import of KML placemarks and basic geometry
-
-### Export Workflows
-- **GeoJSON Export**: Save project survey points as GeoJSON
-- **Surface DXF Export**: Save TIN surfaces as DXF 3DFACE entities
-- **Map Screenshot Export**: Save the current map view as PNG
-
-### Help Assistant
-- **Local Help Assistant**: Lightweight offline contextual guidance with an Ollama-ready local-AI extension point and backend selector
+| Area | Status |
+|---|---|
+| Map visualization | Working |
+| DXF / KMZ overlay import | Working |
+| Export workflows | Working |
+| Help assistant | Working |
+| GNSS / PPK core | Still maturing |
 
 ## Product intent
 
-The app should feel professional, clear, and optimized for field-to-office workflows.
-Dark mode first, geospatial accents, and a calm Apple-like visual hierarchy.
+- Dark mode first
+- Geospatial accents, not decoration overload
+- Clear hierarchy, simple navigation, low cognitive load
+- Graceful handling of missing prerequisites
 
 ## Non-goals for now
-
-**Known limitations and non-goals for the first release:**
 
 - Full CAD authoring suite
 - IFC-heavy workflows
@@ -42,6 +39,7 @@ Dark mode first, geospatial accents, and a calm Apple-like visual hierarchy.
 - Cloud storage integration
 - Multi-user collaboration
 
-## Current status
+## Release posture
 
-GeoForge Studio is production-ready for the core survey workflow tasks listed above. The application is designed to be minimal, focused, and offline-first, with a clean user experience that prioritizes survey professionals' needs.
+Keep the repo private while the GNSS/PPK core matures.
+The repo is licensed under Apache-2.0, but public release still makes sense later, when the product story matches the implementation.

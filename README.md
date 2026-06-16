@@ -1,85 +1,64 @@
 # GeoForge Studio 🛰️
 
-Desktop-native geospatial workstation for GNSS and survey workflows.
+Desktop-native geospatial workstation for GNSS, survey, and volume workflows.
 
-GeoForge Studio starts with a focused first slice:
+## Snapshot
 
-- GNSS post-processing (RINEX parsing, PPK algorithms)
-- 2D map visualization with CRS support
-- DXF / KMZ import (read-only overlays)
-- Volume calculations (TIN surfaces, cut/fill analysis)
+| Area | Status |
+|---|---|
+| Map + overlays | ✅ Working |
+| DXF / KMZ import | ✅ Working |
+| Exports | ✅ Working |
+| Help assistant | ✅ Working |
+| GNSS / PPK core | ⚠️ In progress |
+| License | Apache-2.0 |
 
-## Why this exists 🌍
+## What works today
 
-The goal is to bridge the gap between rigid GNSS tools and heavy GIS/CAD suites.
-The first release is intentionally narrow: do the core survey work well, keep it offline,
-and make the UX clean.
+- 🗺️ 2D map visualization with CRS support
+- 📥 Read-only DXF / KMZ / KML import as overlays
+- 📤 GeoJSON, surface DXF, CSV, and PNG exports
+- 📊 Volume analysis with TIN cut/fill calculations
+- 🧭 Local offline help assistant with backend selection
+- 🧪 Smoke tests and fixture-based verification
 
-## Current capabilities ✅
+## What is still in progress
 
-GeoForge Studio currently ships with the following functionality:
+- GNSS/RINEX parsing and PPK engine are not production-grade yet
+- Project persistence is still being hardened
+- Commercial packaging is still evolving
 
-### Core Processing
-- **GNSS Post-Processing**: RINEX observation and navigation file parsing, PPK algorithms
-- **Volume Analysis**: TIN surface generation from survey points, cut/fill volume calculations
-- **Map Visualization**: 2D map rendering with coordinate reference system support
+## UI panels
 
-### Import Capabilities
-- **DXF Import**: Read-only import of common DXF entities (lines, polylines)
-- **KMZ/KML Import**: Read-only import of KML placemarks and basic geometry
+| Panel | What it does |
+|---|---|
+| Map workspace | Shows survey points and imported overlays |
+| Volume analysis | Calculates cut/fill from TIN surfaces |
+| Help assistant | Gives contextual guidance without leaving the app |
 
-### Development & Testing
-- **Smoke Testing**: End-to-end verification with sample datasets
-- **Fixtures**: Sample RINEX, DXF, and KMZ files for testing
+## Product principles
 
-### Export Workflows
-- **GeoJSON Export**: Save project survey points as GeoJSON
-- **Surface DXF Export**: Save TIN surfaces as DXF 3DFACE entities
-- **Map Screenshot Export**: Save the current map view as PNG
+- Offline-first by default
+- Fail with warnings, not with crashes
+- Keep missing inputs visible to the user
+- Prefer clear, minimal UI over feature clutter
 
-### Help Assistant
-- **Local Help Assistant**: Lightweight offline contextual guidance with an Ollama-ready local-AI extension point and backend selector
+## Docs path
 
-## What is NOT included ❌
+1. `docs/vision.md` — product intent and non-goals
+2. `docs/architecture.md` — stack and module boundaries
+3. `docs/roadmap.md` — real delivery priorities
+4. `CONTRIBUTING.md` — local setup and workflow
+5. `openspec/` — SDD source of truth
 
-**Known limitations and non-goals for the first release:**
+## Release posture
 
-- Full CAD authoring suite
-- IFC-heavy workflows
-- Web point-cloud viewer
-- Advanced 3D visualization
-- Real-time GNSS streaming
-- Cloud storage integration
-- Multi-user collaboration
+This repository can stay **private** while the GNSS/PPK core matures.
+The repo is now licensed under Apache-2.0.
 
-## Reading path 📚
+## Visual language
 
-1. `docs/index.md` — project overview and navigation
-2. `docs/vision.md` — product scope and non-goals
-3. `docs/roadmap.md` — phased delivery plan
-4. `openspec/` — SDD proposal/spec/design/tasks source of truth
-
-## Structure 🧭
-
-| Path | Purpose |
-| --- | --- |
-| `docs/` | Human-readable docs (local + GitHub) |
-| `openspec/` | SDD artifacts and active change state |
-| `.atl/` | Agent/skill registry for the workflow |
-
-## Visual language 🎨
-
-- Dark, elegant, minimal UI
+- Dark, elegant, minimal
 - Geospatial accents, not noisy colors
-- Drone / survey symbolism used sparingly
-- Clean spacing, soft cards, subtle contrast
-
-## Status
-
-- Public repo: GitHub
-- Branch: `main`
-- Released: GeoForge Studio v0.1.0
-
-## Next step 🚀
-
-Explore export workflows and production deployment options.
+- Clean spacing and soft contrast
+- Symbols/icons used sparingly for scanability
