@@ -589,6 +589,20 @@ class MapCanvas(QWidget):
         """
         return self.renderer.is_crs_set()
 
+    def get_layer_names(self) -> list:
+        """Get names of all registered map layers and overlays.
+        
+        Returns:
+            List of layer/overlay identifiers
+        """
+        names = []
+        renderer = self.renderer
+        if hasattr(renderer, '_layers'):
+            names.extend(renderer._layers.keys())
+        if hasattr(renderer, '_overlays'):
+            names.extend(renderer._overlays.keys())
+        return names
+
 __all__ = [
     'MapRenderer',
     'QtMapRenderer',

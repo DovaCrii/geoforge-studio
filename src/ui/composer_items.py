@@ -352,3 +352,325 @@ class ScaleBarItem(QGraphicsObject):
     def render_to_painter(self, painter: QPainter):
         """Render this item to a QPainter (for PDF export)."""
         self.paint(painter, QStyleOptionGraphicsItem(), None)
+
+
+# ---- Legend Item ----
+
+class LegendItem(QGraphicsObject):
+    """Auto-generated legend from visible map layers.
+
+    Displays layer names with color swatches and type labels.
+    Updates when map layers change.
+    """
+
+    def __init__(self, rect: QRectF, map_canvas: MapCanvas):
+        super().__init__()
+        self._rect = rect
+        self._map_canvas = map_canvas
+        self._title_font = QFont("sans-serif", 10, QFont.Weight.Bold)
+        self._entry_font = QFont("sans-serif", 8)
+        self._icon_size = 12
+        self._entries: list = []
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+
+        self.refresh()
+
+    def boundingRect(self) -> QRectF:
+        return self._rect.adjusted(-2, -2, 2, 2)
+
+    def rect(self) -> QRectF:
+        return self._rect
+
+    def refresh(self):
+        """Query the map canvas for visible layers and rebuild entries."""
+        self._entries = []
+
+        if hasattr(self._map_canvas, 'get_layer_names'):
+            names = self._map_canvas.get_layer_names()
+        else:
+            names = []
+
+        # Query for known layer types
+        renderer = self._map_canvas.renderer
+        color_map = {
+            "dxf": QColor(64, 200, 255),
+            "kmz": QColor(120, 220, 120),
+            "points": QColor(0, 120, 255),
+        }
+        type_labels = {
+            "dxf": "DXF Overlay",
+            "kmz": "KMZ/KML",
+            "points": "Survey Points",
+        }
+
+        # Collect from renderer's _layers and _overlays
+        if hasattr(renderer, '_layers'):
+            for layer_id, layer_data in renderer._layers.items():
+                layer_type = layer_data.get('type', 'points')
+                display_type = type_labels.get(layer_type, layer_type)
+                color = color_map.get(layer_type, QColor(100, 100, 100))
+                self._entries.append({
+                    "name": layer_id,
+                    "type": display_type,
+                    "color": color,
+                })
+
+        if hasattr(renderer, '_overlays'):
+            for overlay_id, overlay_data in renderer._overlays.items():
+                color = QColor(64, 200, 255)
+                if overlay_id.startswith("kml"):
+                    color = QColor(120, 220, 120)
+                self._entries.append({
+                    "name": overlay_id,
+                    "type": "Overlay",
+                    "color": color,
+                })
+
+        # If no entries, show placeholder
+        if not self._entries:
+            self._entries.append({
+                "name": "No visible layers",
+                "type": "",
+                "color": QColor(160, 160, 160),
+            })
+
+        # Auto-size height based on content
+        entry_height = 20
+        title_height = 24
+        padding = 10
+        total_h = title_height + len(self._entries) * entry_height + padding
+        self._rect.setHeight(max(total_h, 60))
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionGraphicsItem,
+        widget: Optional[QWidget] = None,
+    ):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Background
+        painter.fillRect(self._rect, QColor(255, 255, 255, 230))
+        painter.setPen(QPen(QColor(180, 180, 180), 0.5))
+        painter.drawRect(self._rect)
+
+        x = self._rect.left() + 8
+        y = self._rect.top() + 8
+
+        # Title
+        painter.setFont(self._title_font)
+        painter.setPen(QColor(0, 0, 0))
+        painter.drawText(QPointF(x, y + 14), "Legend")
+
+        y += 24
+
+        # Entries
+        painter.setFont(self._entry_font)
+        for entry in self._entries:
+            # Color swatch
+            swatch_rect = QRectF(x, y + 2, self._icon_size, self._icon_size)
+            painter.fillRect(swatch_rect, entry["color"])
+            painter.setPen(QPen(QColor(100, 100, 100), 0.5))
+            painter.drawRect(swatch_rect)
+
+            # Name
+            painter.setPen(QColor(0, 0, 0))
+            name_rect = QRectF(x + self._icon_size + 6, y, self._rect.width() - self._icon_size - 20, 16)
+            painter.drawText(name_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, entry["name"])
+
+            y += 18
+
+        # Selection handles
+        if self.isSelected():
+            painter.setPen(QPen(QColor(0, 120, 255), 1.5))
+            painter.setBrush(QBrush(QColor(255, 255, 255)))
+            size = 5
+            for pos in [
+                self._rect.topLeft(), self._rect.topRight(),
+                self._rect.bottomLeft(), self._rect.bottomRight(),
+            ]:
+                painter.drawRect(QRectF(pos.x() - size / 2, pos.y() - size / 2, size, size))
+
+    def render_to_painter(self, painter: QPainter):
+        """Render this item to a QPainter (for PDF export)."""
+        self.refresh()
+        self.paint(painter, QStyleOptionGraphicsItem(), None)
+
+
+# ---- North Arrow Item ----
+
+class NorthArrowItem(QGraphicsObject):
+    """A north arrow indicator pointing up.
+
+    Renders as a triangular arrow with 'N' label above.
+    """
+
+    def __init__(self, rect: QRectF):
+        super().__init__()
+        self._rect = rect
+        self._arrow_color = QColor(40, 40, 40)
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+
+    def boundingRect(self) -> QRectF:
+        return self._rect.adjusted(-4, -4, 4, 4)
+
+    def rect(self) -> QRectF:
+        return self._rect
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionGraphicsItem,
+        widget: Optional[QWidget] = None,
+    ):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        cx = self._rect.center().x()
+        cy = self._rect.center().y()
+        w = self._rect.width()
+        h = self._rect.height()
+
+        # Arrow polygon (pointing up)
+        arrow = [
+            QPointF(cx, self._rect.top()),           # tip
+            QPointF(self._rect.right(), cy + h * 0.3),  # right
+            QPointF(cx + w * 0.15, cy),                 # right inner
+            QPointF(cx + w * 0.15, self._rect.bottom()),# right bottom
+            QPointF(cx - w * 0.15, self._rect.bottom()),# left bottom
+            QPointF(cx - w * 0.15, cy),                 # left inner
+            QPointF(self._rect.left(), cy + h * 0.3),   # left
+        ]
+
+        # Fill left half (white) and right half (black)
+        left_half = [
+            QPointF(cx, self._rect.top()),
+            QPointF(cx, cy + h * 0.3),
+            QPointF(self._rect.left(), cy + h * 0.3),
+        ]
+        right_half = [
+            QPointF(cx, self._rect.top()),
+            QPointF(self._rect.right(), cy + h * 0.3),
+            QPointF(cx, cy + h * 0.3),
+        ]
+
+        from PyQt6.QtGui import QPolygonF
+
+        painter.setPen(QPen(self._arrow_color, 1))
+
+        # Left half (white)
+        painter.setBrush(QBrush(Qt.GlobalColor.white))
+        painter.drawPolygon(QPolygonF(left_half))
+
+        # Right half (black)
+        painter.setBrush(QBrush(QColor(40, 40, 40)))
+        painter.drawPolygon(QPolygonF(right_half))
+
+        # Outline
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawPolygon(QPolygonF(arrow))
+
+        # "N" label above the tip
+        painter.setFont(QFont("sans-serif", 8, QFont.Weight.Bold))
+        painter.setPen(self._arrow_color)
+        painter.drawText(
+            QRectF(cx - 8, self._rect.top() - 18, 16, 14),
+            Qt.AlignmentFlag.AlignCenter,
+            "N",
+        )
+
+        # Selection handles
+        if self.isSelected():
+            painter.setPen(QPen(QColor(0, 120, 255), 1.5))
+            painter.setBrush(QBrush(QColor(255, 255, 255)))
+            size = 5
+            for pos in [
+                self._rect.topLeft(), self._rect.topRight(),
+                self._rect.bottomLeft(), self._rect.bottomRight(),
+            ]:
+                painter.drawRect(QRectF(pos.x() - size / 2, pos.y() - size / 2, size, size))
+
+    def render_to_painter(self, painter: QPainter):
+        """Render this item to a QPainter (for PDF export)."""
+        self.paint(painter, QStyleOptionGraphicsItem(), None)
+
+
+# ---- Text Label Item ----
+
+class TextItem(QGraphicsObject):
+    """An editable text label for titles and annotations.
+
+    Double-click to edit text inline. Supports font and size configuration.
+    """
+
+    def __init__(self, rect: QRectF, text: str = "Title"):
+        super().__init__()
+        self._rect = rect
+        self._text = text
+        self._font = QFont("sans-serif", 18, QFont.Weight.Bold)
+        self._color = QColor(0, 0, 0)
+        self._alignment = Qt.AlignmentFlag.AlignCenter
+        self._editing = False
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+
+    def boundingRect(self) -> QRectF:
+        return self._rect.adjusted(-2, -2, 2, 2)
+
+    def rect(self) -> QRectF:
+        return self._rect
+
+    def set_text(self, text: str):
+        self._text = text
+        self.update()
+
+    def text(self) -> str:
+        return self._text
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionGraphicsItem,
+        widget: Optional[QWidget] = None,
+    ):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setFont(self._font)
+        painter.setPen(self._color)
+        painter.drawText(self._rect, self._alignment, self._text)
+
+        # Selection handles
+        if self.isSelected():
+            painter.setPen(QPen(QColor(0, 120, 255), 1.0))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(self._rect)
+
+            painter.setBrush(QBrush(QColor(255, 255, 255)))
+            size = 5
+            for pos in [
+                self._rect.topLeft(), self._rect.topRight(),
+                self._rect.bottomLeft(), self._rect.bottomRight(),
+            ]:
+                painter.drawRect(QRectF(pos.x() - size / 2, pos.y() - size / 2, size, size))
+
+    def mouseDoubleClickEvent(self, event):
+        """Double-click starts inline text editing."""
+        super().mouseDoubleClickEvent(event)
+
+        from PyQt6.QtWidgets import QInputDialog
+        new_text, ok = QInputDialog.getText(
+            None, "Edit Text", "Label text:",
+            text=self._text,
+        )
+        if ok and new_text:
+            self._text = new_text
+            self.update()
+
+    def render_to_painter(self, painter: QPainter):
+        """Render this item to a QPainter (for PDF export)."""
+        painter.setFont(self._font)
+        painter.setPen(self._color)
+        painter.drawText(self._rect, self._alignment, self._text)

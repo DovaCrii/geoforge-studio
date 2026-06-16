@@ -7,7 +7,7 @@ with map frames, legends, scale bars, north arrows, and text labels.
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from PyQt6.QtCore import Qt, QRectF, QPointF
+from PyQt6.QtCore import Qt, QRectF, QPointF, QEvent
 from PyQt6.QtGui import (
     QPainter, QColor, QPen, QBrush, QFont, QAction,
     QPageSize, QPageLayout,
@@ -115,6 +115,24 @@ class ComposerWidget(QWidget):
         add_scale_btn.clicked.connect(self.add_scale_bar)
         toolbar.addWidget(add_scale_btn)
 
+        add_legend_btn = QPushButton("📖 Legend")
+        add_legend_btn.clicked.connect(self.add_legend)
+        toolbar.addWidget(add_legend_btn)
+
+        add_north_btn = QPushButton("🧭 North Arrow")
+        add_north_btn.clicked.connect(self.add_north_arrow)
+        toolbar.addWidget(add_north_btn)
+
+        add_text_btn = QPushButton("✏️ Text")
+        add_text_btn.clicked.connect(self.add_text_label)
+        toolbar.addWidget(add_text_btn)
+
+        toolbar.addSeparator()
+
+        delete_btn = QPushButton("🗑 Delete")
+        delete_btn.clicked.connect(self.delete_selected)
+        toolbar.addWidget(delete_btn)
+
         toolbar.addSeparator()
 
         page_setup_btn = QPushButton("📄 Page Setup")
@@ -132,8 +150,11 @@ class ComposerWidget(QWidget):
         self._view = QGraphicsView(self._scene)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self._view.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+        self._view.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self._view.installEventFilter(self)
         layout.addWidget(self._view)
 
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._rebuild_page()
 
     def _rebuild_page(self):
@@ -200,6 +221,84 @@ class ComposerWidget(QWidget):
         )
         self._scene.addItem(item)
         self._composer_items.append(item)
+
+    def add_legend(self):
+        """Add a LegendItem at the right side of the content area."""
+        from ui.composer_items import LegendItem
+
+        content = self._content_rect()
+        map_frame = self._first_map_frame()
+        if map_frame:
+            mf_rect = map_frame.rect()
+            x = mf_rect.right() + 20
+            y = mf_rect.top() + 20
+            w = min(content.right() - x, 140)
+        else:
+            x = content.right() - 160
+            y = content.top() + 40
+            w = 140
+
+        item = LegendItem(QRectF(x, y, w, 120), self._map_canvas)
+        self._scene.addItem(item)
+        self._composer_items.append(item)
+
+    def add_north_arrow(self):
+        """Add a NorthArrowItem at the top-right of the map frame."""
+        from ui.composer_items import NorthArrowItem
+
+        map_frame = self._first_map_frame()
+        if map_frame:
+            mf_rect = map_frame.rect()
+            size = min(40, mf_rect.width() * 0.08)
+            x = mf_rect.right() - size - 10
+            y = mf_rect.top() + 10
+        else:
+            content = self._content_rect()
+            size = 40
+            x = content.right() - size - 20
+            y = content.top() + 20
+
+        item = NorthArrowItem(QRectF(x, y, size, size * 1.5))
+        self._scene.addItem(item)
+        self._composer_items.append(item)
+
+    def add_text_label(self):
+        """Add a TextItem centered at the top of the content area."""
+        from ui.composer_items import TextItem
+
+        content = self._content_rect()
+        w = min(content.width() * 0.6, 400)
+        h = 40
+        x = content.center().x() - w / 2
+        y = content.top() + 5
+
+        item = TextItem(QRectF(x, y, w, h), "Map Title")
+        self._scene.addItem(item)
+        self._composer_items.append(item)
+
+    def delete_selected(self):
+        """Remove the currently selected item from the scene."""
+        selected = self._scene.selectedItems()
+        for item in selected:
+            if item is self._page_item:
+                continue
+            self._scene.removeItem(item)
+            if item in self._composer_items:
+                self._composer_items.remove(item)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard events (Delete key to remove items)."""
+        if event.key() == Qt.Key.Key_Delete:
+            self.delete_selected()
+        super().keyPressEvent(event)
+
+    def eventFilter(self, obj, event):
+        """Forward key events from the QGraphicsView to this widget."""
+        if obj is self._view and event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Delete:
+                self.delete_selected()
+                return True
+        return super().eventFilter(obj, event)
 
     def _first_map_frame(self):
         """Return the first MapFrameItem in the scene, or None."""
