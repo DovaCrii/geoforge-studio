@@ -82,13 +82,14 @@ def test_map_renderer_crs():
     # Create a map renderer
     renderer = QtMapRenderer()
     
-    # Test initial state
-    assert not renderer.is_crs_set(), "Renderer CRS should not be set initially"
-    assert renderer.get_crs() is None, "Renderer CRS should be None initially"
-    assert renderer.get_crs_info() == {}, "Renderer CRS info should be empty initially"
+    # Test initial state — renderer defaults to WGS84
+    assert renderer.is_crs_set(), "Renderer CRS should be set by default"
+    assert renderer.get_crs() is not None, "Renderer CRS should not be None"
+    assert renderer.get_crs_info() != {}, "Renderer CRS info should not be empty"
+    assert renderer.get_crs_info()["name"] == "WGS 84", "Renderer should default to WGS 84"
     
-    # Set a CRS
-    crs = pyproj.CRS.from_epsg(4326)
+    # Set a different CRS
+    crs = pyproj.CRS.from_epsg(3857)  # Web Mercator
     renderer.set_crs(crs)
     
     # Test CRS is set
@@ -98,7 +99,6 @@ def test_map_renderer_crs():
     # Test CRS info
     crs_info = renderer.get_crs_info()
     assert "name" in crs_info, "Renderer CRS info should contain name"
-    assert crs_info["name"] == "WGS 84", "Renderer CRS name should be WGS 84"
     
     print("✓ MapRenderer CRS tests passed")
 

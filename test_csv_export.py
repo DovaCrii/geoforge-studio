@@ -63,6 +63,11 @@ def test_volume_panel_csv_export():
     print("\nTesting VolumePanel CSV export...")
     
     try:
+        from PyQt6.QtWidgets import QApplication
+        
+        # Create QApplication if none exists (required before any QWidget)
+        _app = QApplication.instance() or QApplication([])
+        
         from ui.volume_panel import VolumePanel
         
         # Create a mock services dict

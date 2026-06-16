@@ -23,18 +23,18 @@ class CRSManager:
         self._crs: Optional[pyproj.CRS] = None
         self._transformer: Optional[pyproj.Transformer] = None
         
-    def set_crs(self, crs: pyproj.CRS) -> None:
+    def set_crs(self, crs: Optional[pyproj.CRS]) -> None:
         """Set the coordinate reference system for transformations.
-        
+
         Args:
-            crs: The coordinate reference system to use
-            
+            crs: The coordinate reference system to use, or None to reset
+
         Raises:
             CRSError: If the CRS is invalid
         """
-        if not isinstance(crs, pyproj.CRS):
-            raise TypeError(f"Expected pyproj.CRS, got {type(crs)}")
-            
+        if crs is not None and not isinstance(crs, pyproj.CRS):
+            raise TypeError(f"Expected pyproj.CRS or None, got {type(crs)}")
+
         self._crs = crs
         self._transformer = None  # Reset transformer
         
@@ -154,11 +154,11 @@ class CRSManager:
 _crs_manager = CRSManager()
 
 # Convenience functions for backward compatibility
-def set_crs(crs: pyproj.CRS) -> None:
+def set_crs(crs: Optional[pyproj.CRS]) -> None:
     """Set the global CRS for coordinate transformations.
-    
+
     Args:
-        crs: The coordinate reference system to use
+        crs: The coordinate reference system to use, or None to reset
     """
     _crs_manager.set_crs(crs)
     
