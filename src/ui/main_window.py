@@ -188,6 +188,29 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("Ready")
         self.statusbar.addWidget(self.status_label)
         
+        # Coordinate display on the right side of the status bar
+        self.coord_label = QLabel("X: —  Y: —")
+        self.coord_label.setMinimumWidth(260)
+        self.coord_label.setStyleSheet("font-family: monospace; padding: 0 8px;")
+        self.statusbar.addPermanentWidget(self.coord_label)
+        
+        # Connect map canvas coordinate signal
+        if hasattr(self, 'map_canvas'):
+            self.map_canvas.coords_changed.connect(self._update_coords)
+    
+    def _update_coords(self, easting: float, northing: float, crs_label: str):
+        """Update the coordinate label in the status bar.
+        
+        Args:
+            easting: X coordinate value
+            northing: Y coordinate value
+            crs_label: CRS description (e.g. "EPSG:4326")
+        """
+        if "not set" in crs_label.lower():
+            self.coord_label.setText("CRS not set")
+        else:
+            self.coord_label.setText(f"X: {easting:.3f}  Y: {northing:.3f}  [{crs_label}]")
+        
     def new_project(self):
         """Create a new project."""
         self.project_name_input.clear()
